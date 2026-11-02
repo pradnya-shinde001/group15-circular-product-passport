@@ -188,14 +188,5 @@ your-project/
 └── CIRCULARITY_ENGINE_UML.md
 ```
 
-## 11. How to view the diagrams on GitHub
-
-1. Add this file to the same repository as the Circularity Score Engine implementation.
-2. Commit and push it to your assignment branch.
-3. Open `CIRCULARITY_ENGINE_UML.md` on GitHub.
-4. GitHub renders the Mermaid class, flowchart and sequence diagrams in the Markdown preview.
-
----
-
 **Subsystem:** Circularity Score Engine (Subsystem 3)  
 **Primary implementation file:** `circularity.py`
