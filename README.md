@@ -160,7 +160,7 @@ classDiagram
 ```
 
 ### Subsystem 3: Circularity score engine
-### Classes: ScoreCalculator, ScoreWeights, CircularityScore, Subscore, Grade and ConfigError
+### Classes: ScoreCalculator, ScoreWeights, CircularityScore, Subscore and Grade
 
 ```mermaid
 classDiagram
