@@ -78,30 +78,16 @@ classDiagram
     }
 ```
 
-### Subsystem 2: Event Ledger
-
-**Classes:** LifecycleEvent, EventLedger, ChainVerifier
+# UML Class Diagram – Event Ledger
 
 ```mermaid
 classDiagram
-
-    Product "1" --> "*" LifecycleEvent : has
-    User "1" --> "*" LifecycleEvent : creates
-    EventLedger "1" --> "*" LifecycleEvent : manages
-    ChainVerifier ..> LifecycleEvent : verifies
-
-    class Product {
-        <<external>>
-        -uuid
-        +get_uuid()
-    }
-
-    class User {
-        <<external>>
-        -email
-        -role
-        +get_email()
-        +get_role()
+    class EventLedger {
+        -events
+        -score_engine_callback
+        +add_event(product, actor, event_type, details)
+        +get_history(product_uuid)
+        +get_genesis_hash()
     }
 
     class LifecycleEvent {
@@ -112,10 +98,6 @@ classDiagram
         -details
         -previous_hash
         -event_hash
-        -sealed
-        +__init__()
-        +initialize()
-        +calculate_hash()
         +get_product_uuid()
         +get_event_type()
         +get_timestamp()
@@ -123,40 +105,22 @@ classDiagram
         +get_details()
         +get_previous_hash()
         +get_event_hash()
-        +get_event_data()
-        +set_product_uuid()
-        +set_event_type()
-        +set_actor_email()
-        +set_details()
-        +set_previous_hash()
     }
 
-    class EventLedger {
-        +GENESIS_HASH
-        +EVENT_PERMISSIONS
-        -genesis_hash
-        -events
-        -score_engine_callback
-        +__init__()
-        +initialize()
-        +get_genesis_hash()
-        +get_history()
-        +get_events()
-        +set_genesis_hash()
-        +add_event()
+    class EventHasher {
+        +calculate_hash(event)
+        +verify_hash(event)
     }
 
     class ChainVerifier {
-        -genesis_hash
-        -result
-        +__init__()
-        +initialize()
-        +get_genesis_hash()
-        +get_result()
-        +set_genesis_hash()
-        +verify_chain()
-        +first_broken_event()
+        +verify_chain(events)
     }
+
+    EventLedger "1" --> "*" LifecycleEvent : manages
+    EventLedger ..> EventHasher : uses
+    EventLedger ..> ChainVerifier : provides events for verification
+    ChainVerifier ..> LifecycleEvent : verifies
+    EventHasher ..> LifecycleEvent : hashes
 ```
 
 ### Subsystem 3: Circularity score engine
