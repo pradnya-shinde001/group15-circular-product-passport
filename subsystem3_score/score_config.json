@@ -1,0 +1,22 @@
+{
+  "weights": {
+    "recycled_content": 0.20,
+    "repairability": 0.25,
+    "lifespan": 0.20,
+    "recyclability": 0.25,
+    "hazard": 0.10
+  },
+  "category_lifespan_years": {
+    "Laptop": 5,
+    "Smartphone": 3,
+    "Tablet": 4,
+    "Monitor": 7,
+    "Desktop computer": 6,
+    "Printer": 5,
+    "Keyboard": 6,
+    "Headphones": 3,
+    "Smartwatch": 3,
+    "Camera": 6,
+    "Other": 5
+  }
+}
