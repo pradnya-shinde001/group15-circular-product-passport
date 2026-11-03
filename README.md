@@ -6,12 +6,12 @@ Each homework assignment has its own branch. The classes are added there.
 
 ## Team Overview
 
-| Team member | Subsystem | Folder |
-|---|---|---|
-| Mosaddeka Mallick | 1. Passport, QR code and web UI | [subsystem1_passport](subsystem1_passport/) |
-| Anishkumar Sukumar | 2. Event ledger (tamper-evident history) | [subsystem2_ledger](subsystem2_ledger/) |
-| Rajib Munshi | 3. Circularity score engine | [subsystem3_score](subsystem3_score/) |
-| Pradnya Shinde | 4. AI engine (identification and advice) | [subsystem4_ai_engine](subsystem4_ai_engine/) |
+| Team member        | Subsystem                                | Folder                                        |
+| ------------------ | ---------------------------------------- | --------------------------------------------- |
+| Mosaddeka Mallick  | 1. Passport, QR code and web UI          | [subsystem1_passport](subsystem1_passport/)   |
+| Anishkumar Sukumar | 2. Event ledger (tamper-evident history) | [subsystem2_ledger](subsystem2_ledger/)       |
+| Rajib Munshi       | 3. Circularity score engine              | [subsystem3_score](subsystem3_score/)         |
+| Pradnya Shinde     | 4. AI engine (identification and advice) | [subsystem4_ai_engine](subsystem4_ai_engine/) |
 
 ## Presentation Link
 
@@ -20,12 +20,70 @@ Each homework assignment has its own branch. The classes are added there.
 ## System Design
 
 ### Subsystem 1: Passport, QR code and web UI
-TODO
+
+### Classes: `User`, `Product`, `MaterialComponent`, `Passport`, `QRCode`.
+
+```mermaid
+classDiagram
+    User "1" --> "*" Product : owns
+    Product "1" --> "1" Passport : has
+    Product "1" --> "*" MaterialComponent : made of
+    Passport "1" --> "1" QRCode : has
+    class User {
+        -email
+        -role
+        -password_hash
+        +get_email()
+        +set_email()
+        +get_role()
+        +set_role()
+        +set_password()
+        +check_password()
+        +can_edit()
+    }
+    class Product {
+        -uuid
+        -name
+        -model
+        -category
+        -lifespan_years
+        +get_name()
+        +set_name()
+        +add_material()
+        +materials_valid()
+        +validate()
+    }
+    class MaterialComponent {
+        -material
+        -percent
+        -recycled
+        -hazard
+        +get_percent()
+        +set_percent()
+        +to_dict()
+    }
+    class Passport {
+        -public_url
+        +get_public_url()
+        +set_public_url()
+        +export_json()
+    }
+    class QRCode {
+        -png_bytes
+        -target_url
+        +get_target_url()
+        +set_target_url()
+        +generate()
+        +save()
+    }
+```
 
 ### Subsystem 2: Event ledger
+
 TODO
 
 ### Subsystem 3: Circularity score engine
+
 TODO
 
 ### Subsystem 4: AI engine
