@@ -132,6 +132,8 @@ classDiagram
     }
 
     class EventLedger {
+        +GENESIS_HASH
+        +EVENT_PERMISSIONS
         -genesis_hash
         -events
         -score_engine_callback
@@ -155,7 +157,6 @@ classDiagram
         +verify_chain()
         +first_broken_event()
     }
-```
 ### Subsystem 3: Circularity score engine
 
 TODO
