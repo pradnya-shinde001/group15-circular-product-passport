@@ -1,6 +1,6 @@
-
 from typing import ClassVar
 
+from .event_hasher import EventHasher
 from .lifecycle_event import LifecycleEvent
 
 
@@ -25,12 +25,14 @@ class EventLedger:
 
     def initialize(self, score_engine_callback=None):
         """Initialization method."""
+
         if hasattr(self, "_events"):
             raise ValueError("EventLedger is already initialized.")
 
         self._genesis_hash = self.GENESIS_HASH
         self._events = {}
         self._score_engine_callback = score_engine_callback
+        self._event_hasher = EventHasher()
 
     # Getters
 
@@ -43,7 +45,7 @@ class EventLedger:
     def get_events(self):
         return [event for history in self._events.values() for event in history]
 
-    # Setter
+    # Setters
 
     def set_genesis_hash(self, genesis_hash):
 
@@ -75,6 +77,10 @@ class EventLedger:
         previous_hash = history[-1].get_event_hash() if history else self._genesis_hash
 
         event = LifecycleEvent(product_uuid, event_type, actor_email, details, previous_hash)
+
+        event_hash = self._event_hasher.calculate_hash(event)
+        event.set_event_hash(event_hash)
+
         self._events.setdefault(product_uuid, []).append(event)
 
         # Notify score engine
@@ -83,3 +89,4 @@ class EventLedger:
             self._score_engine_callback(event)
 
         return event
+    

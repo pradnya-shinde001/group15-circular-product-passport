@@ -1,6 +1,3 @@
-
-import hashlib
-import json
 from copy import deepcopy
 from datetime import UTC, datetime
 from typing import ClassVar
@@ -8,10 +5,7 @@ from typing import ClassVar
 
 class LifecycleEvent:
 
-    EVENT_TYPES: ClassVar[list[str]] = [
-        "manufactured", "sold", "used",
-        "repaired", "refurbished", "recycled"
-    ]
+    EVENT_TYPES: ClassVar[list[str]] = ["manufactured", "sold", "used", "repaired", "refurbished", "recycled"]
 
     def __init__(self, product_uuid, event_type, actor_email, details, previous_hash):
         """Constructor."""
@@ -21,6 +15,7 @@ class LifecycleEvent:
 
     def initialize(self, product_uuid, event_type, actor_email, details, previous_hash):
         """Initialization method."""
+
         if getattr(self, "_sealed", False):
             raise ValueError("Event is already initialized and sealed.")
 
@@ -34,7 +29,7 @@ class LifecycleEvent:
         self._actor_email = actor_email
         self._details = deepcopy(details)
         self._previous_hash = previous_hash
-        self._event_hash = self.calculate_hash()
+        self._event_hash = None
         self._sealed = True
 
     # Check sealed status
@@ -84,8 +79,10 @@ class LifecycleEvent:
 
     def set_event_type(self, event_type):
         self._check_sealed()
+
         if event_type not in self.EVENT_TYPES:
             raise ValueError("Invalid event type.")
+
         self._event_type = event_type
 
     def set_actor_email(self, actor_email):
@@ -100,8 +97,13 @@ class LifecycleEvent:
         self._check_sealed()
         self._previous_hash = previous_hash
 
-    # Hash calculation
+    def set_event_hash(self, event_hash):
+        """Assign event hash once."""
 
-    def calculate_hash(self):
-        event_string = json.dumps(self.get_event_data(), sort_keys=True, separators=(",", ":"))
-        return hashlib.sha256(event_string.encode("utf-8")).hexdigest()
+        if self._event_hash is not None:
+            raise ValueError("Event hash is already assigned.")
+
+        if not isinstance(event_hash, str) or not event_hash:
+            raise ValueError("Event hash must be a non-empty string.")
+
+        self._event_hash = event_hash
