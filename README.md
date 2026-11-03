@@ -157,6 +157,7 @@ classDiagram
         +verify_chain()
         +first_broken_event()
     }
+
 ### Subsystem 3: Circularity score engine
 
 TODO
