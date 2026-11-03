@@ -78,26 +78,39 @@ classDiagram
     }
 ```
 
-# UML Class Diagram – Event Ledger
+### Subsystem 2: Event Ledger
 
 ```mermaid
 classDiagram
+
     class EventLedger {
-        -events
-        -score_engine_callback
-        +add_event(product, actor, event_type, details)
-        +get_history(product_uuid)
+        -GENESIS_HASH: str
+        -EVENT_PERMISSIONS: ClassVar
+        -_genesis_hash: str
+        -_events: dict
+        -_score_engine_callback
+        -_event_hasher: EventHasher
+        +__init__(score_engine_callback)
+        +initialize(score_engine_callback)
         +get_genesis_hash()
+        +get_history(product_uuid)
+        +get_events()
+        +set_genesis_hash(genesis_hash)
+        +add_event(product, actor, event_type, details)
     }
 
     class LifecycleEvent {
-        -product_uuid
-        -event_type
-        -timestamp
-        -actor_email
-        -details
-        -previous_hash
-        -event_hash
+        +EVENT_TYPES: ClassVar
+        -_product_uuid
+        -_event_type
+        -_timestamp
+        -_actor_email
+        -_details
+        -_previous_hash
+        -_event_hash
+        -_sealed: bool
+        +__init__(product_uuid, event_type, actor_email, details, previous_hash)
+        +initialize(product_uuid, event_type, actor_email, details, previous_hash)
         +get_product_uuid()
         +get_event_type()
         +get_timestamp()
@@ -105,22 +118,42 @@ classDiagram
         +get_details()
         +get_previous_hash()
         +get_event_hash()
+        +get_event_data()
+        +set_product_uuid(product_uuid)
+        +set_event_type(event_type)
+        +set_actor_email(actor_email)
+        +set_details(details)
+        +set_previous_hash(previous_hash)
+        +set_event_hash(event_hash)
     }
 
     class EventHasher {
+        -_algorithm: str
+        -_initialized: bool
+        +__init__()
+        +initialize()
+        +get_algorithm()
         +calculate_hash(event)
         +verify_hash(event)
     }
 
     class ChainVerifier {
+        -_genesis_hash: str
+        -_result: dict
+        -_event_hasher: EventHasher
+        +__init__(genesis_hash)
+        +initialize(genesis_hash)
+        +get_genesis_hash()
+        +get_result()
+        +set_genesis_hash(genesis_hash)
         +verify_chain(events)
+        +first_broken_event()
     }
 
-    EventLedger "1" --> "*" LifecycleEvent : manages
-    EventLedger ..> EventHasher : uses
-    EventLedger ..> ChainVerifier : provides events for verification
+    EventLedger "1" --> "0..*" LifecycleEvent : stores
+    EventLedger --> EventHasher : uses
+    ChainVerifier --> EventHasher : uses
     ChainVerifier ..> LifecycleEvent : verifies
-    EventHasher ..> LifecycleEvent : hashes
 ```
 
 ### Subsystem 3: Circularity score engine
