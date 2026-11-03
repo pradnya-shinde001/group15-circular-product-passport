@@ -78,12 +78,13 @@ classDiagram
     }
 ```
 
-### Subsystem 2: Event Ledger (Tamper-Evident History)
+### Subsystem 2: Event Ledger
 
-**Classes:** `LifecycleEvent`, `EventLedger`, `ChainVerifier`.
+**Classes:** LifecycleEvent, EventLedger, ChainVerifier
 
 ```mermaid
 classDiagram
+
     Product "1" --> "*" LifecycleEvent : has
     User "1" --> "*" LifecycleEvent : creates
     EventLedger "1" --> "*" LifecycleEvent : manages
@@ -92,46 +93,67 @@ classDiagram
     class Product {
         <<external>>
         -uuid
+        +get_uuid()
     }
 
     class User {
         <<external>>
-        -id
+        -email
         -role
+        +get_email()
+        +get_role()
     }
 
     class LifecycleEvent {
-        -product_id
+        -product_uuid
         -event_type
         -timestamp
-        -actor_id
+        -actor_email
         -details
         -previous_hash
         -event_hash
+        -sealed
         +__init__()
+        +initialize()
         +calculate_hash()
-        +get_event_data()
-        +get_event_hash()
+        +get_product_uuid()
         +get_event_type()
+        +get_timestamp()
+        +get_actor_email()
+        +get_details()
+        +get_previous_hash()
+        +get_event_hash()
+        +get_event_data()
+        +set_product_uuid()
+        +set_event_type()
+        +set_actor_email()
         +set_details()
+        +set_previous_hash()
     }
 
     class EventLedger {
-        -events
         -genesis_hash
+        -events
+        -score_engine_callback
         +__init__()
         +initialize()
-        +add_event()
+        +get_genesis_hash()
         +get_history()
         +get_events()
+        +set_genesis_hash()
+        +add_event()
     }
 
     class ChainVerifier {
         -genesis_hash
+        -result
         +__init__()
+        +initialize()
+        +get_genesis_hash()
+        +get_result()
+        +set_genesis_hash()
         +verify_chain()
         +first_broken_event()
-        +get_result()
     }
 ```
 ### Subsystem 3: Circularity score engine
