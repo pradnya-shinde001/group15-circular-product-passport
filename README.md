@@ -215,15 +215,12 @@ classDiagram
         +min_score
     }
 
-    class ConfigError {
-        <<exception>>
-    }
 
     ScoreCalculator ..> ScoreWeights : uses
     ScoreCalculator ..> CircularityScore : creates
     CircularityScore "1" *-- "1..*" SubScore : contains
     CircularityScore ..> Grade : assigned grade
-    ConfigError --|> ValueError : inherits
+    
 ```
 
 
