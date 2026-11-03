@@ -78,10 +78,62 @@ classDiagram
     }
 ```
 
-### Subsystem 2: Event ledger
+### Subsystem 2: Event Ledger (Tamper-Evident History)
 
-TODO
+**Classes:** `LifecycleEvent`, `EventLedger`, `ChainVerifier`.
 
+```mermaid
+classDiagram
+    Product "1" --> "*" LifecycleEvent : has
+    User "1" --> "*" LifecycleEvent : creates
+    EventLedger "1" --> "*" LifecycleEvent : manages
+    ChainVerifier ..> LifecycleEvent : verifies
+
+    class Product {
+        <<external>>
+        -uuid
+    }
+
+    class User {
+        <<external>>
+        -id
+        -role
+    }
+
+    class LifecycleEvent {
+        -product_id
+        -event_type
+        -timestamp
+        -actor_id
+        -details
+        -previous_hash
+        -event_hash
+        +__init__()
+        +calculate_hash()
+        +get_event_data()
+        +get_event_hash()
+        +get_event_type()
+        +set_details()
+    }
+
+    class EventLedger {
+        -events
+        -genesis_hash
+        +__init__()
+        +initialize()
+        +add_event()
+        +get_history()
+        +get_events()
+    }
+
+    class ChainVerifier {
+        -genesis_hash
+        +__init__()
+        +verify_chain()
+        +first_broken_event()
+        +get_result()
+    }
+```
 ### Subsystem 3: Circularity score engine
 
 TODO
