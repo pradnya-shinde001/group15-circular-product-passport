@@ -125,9 +125,9 @@ classDiagram
     }
 
     EventLedger "1" --> "0..*" LifecycleEvent : manages
-    EventLedger --> EventHasher : uses
-    ChainVerifier --> EventHasher : uses
-    ChainVerifier ..> LifecycleEvent : verifies
+    EventLedger "1" --> "1" EventHasher : uses
+    ChainVerifier "1" --> "1" EventHasher : uses
+    ChainVerifier "1" ..> "0..*" LifecycleEvent : verifies
 ```
 
 ### Subsystem 3: Circularity score engine
