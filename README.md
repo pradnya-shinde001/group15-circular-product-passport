@@ -80,27 +80,23 @@ classDiagram
 
 ### Subsystem 2: Event Ledger
 
+### Classes: `EventLedger`, `LifecycleEvent`, `EventHasher`, `ChainVerifier`
+
 ```mermaid
 classDiagram
 
     class EventLedger {
-        -GENESIS_HASH: str
-        -EVENT_PERMISSIONS: ClassVar
-        -_genesis_hash: str
         -_events: dict
+        -_genesis_hash: str
         -_score_engine_callback
         -_event_hasher: EventHasher
-        +__init__(score_engine_callback)
-        +initialize(score_engine_callback)
-        +get_genesis_hash()
+        +add_event(product, actor, event_type, details)
         +get_history(product_uuid)
         +get_events()
-        +set_genesis_hash(genesis_hash)
-        +add_event(product, actor, event_type, details)
+        +get_genesis_hash()
     }
 
     class LifecycleEvent {
-        +EVENT_TYPES: ClassVar
         -_product_uuid
         -_event_type
         -_timestamp
@@ -108,31 +104,13 @@ classDiagram
         -_details
         -_previous_hash
         -_event_hash
-        -_sealed: bool
-        +__init__(product_uuid, event_type, actor_email, details, previous_hash)
-        +initialize(product_uuid, event_type, actor_email, details, previous_hash)
-        +get_product_uuid()
-        +get_event_type()
-        +get_timestamp()
-        +get_actor_email()
-        +get_details()
-        +get_previous_hash()
-        +get_event_hash()
         +get_event_data()
-        +set_product_uuid(product_uuid)
-        +set_event_type(event_type)
-        +set_actor_email(actor_email)
-        +set_details(details)
-        +set_previous_hash(previous_hash)
-        +set_event_hash(event_hash)
+        +get_event_hash()
+        +get_previous_hash()
     }
 
     class EventHasher {
         -_algorithm: str
-        -_initialized: bool
-        +__init__()
-        +initialize()
-        +get_algorithm()
         +calculate_hash(event)
         +verify_hash(event)
     }
@@ -141,16 +119,12 @@ classDiagram
         -_genesis_hash: str
         -_result: dict
         -_event_hasher: EventHasher
-        +__init__(genesis_hash)
-        +initialize(genesis_hash)
-        +get_genesis_hash()
-        +get_result()
-        +set_genesis_hash(genesis_hash)
         +verify_chain(events)
         +first_broken_event()
+        +get_result()
     }
 
-    EventLedger "1" --> "0..*" LifecycleEvent : stores
+    EventLedger "1" --> "0..*" LifecycleEvent : manages
     EventLedger --> EventHasher : uses
     ChainVerifier --> EventHasher : uses
     ChainVerifier ..> LifecycleEvent : verifies
