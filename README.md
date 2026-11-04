@@ -17,6 +17,53 @@ Each homework assignment has its own branch. The classes are added there.
 
 **Team video:** the link will be added here.
 
+## Run it
+
+Tested with Python 3.14. Run every command from this folder.
+
+```bash
+python3 -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+To read the description of each subsystem's classes, with their methods, getters and setters (press `q` to close it):
+
+```bash
+python -m pydoc subsystem1_passport
+python -m pydoc subsystem2_ledger
+python -m pydoc subsystem3_score
+python -m pydoc subsystem4_ai_engine
+```
+
+Each folder's `__init__.py` lists its classes, which is why these commands can show them.
+
+Each subsystem has a demo that creates its objects, uses their getters and setters, and prints the results:
+
+```bash
+python -m subsystem1_passport.demo
+python -m subsystem2_ledger.demo
+python -m subsystem3_score.demo
+python -m subsystem4_ai_engine.demo
+```
+
+The demos need no API key and no extra setup. Each subsystem runs on its own.
+
+### Optional: the real AI
+
+The Subsystem 4 demo uses the rule-based advisor and does not load the CLIP image model. To identify a real photo with CLIP, install its large packages and give the demo a photo. The first run also downloads the model.
+
+```bash
+pip install -r requirements-clip.txt
+python -m subsystem4_ai_engine.demo path/to/photo.jpg
+```
+
+To use the LLM, set an API key from https://chat.kiconnect.nrw as an environment variable. The key is never stored in the code.
+
+```bash
+export KICONNECT_API_KEY="your-key"
+```
+
 ## System Design
 
 ### Subsystem 1: Passport, QR code and web UI
@@ -195,35 +242,63 @@ classDiagram
 ```
 
 
-
 ### Subsystem 4: AI engine
 
 ```mermaid
 classDiagram
-    ImageClassifier "1" --> "*" AIPrediction : makes
-    AIPrediction "*" --> "1" Recommender : by
+    ImageClassifier ..> AIPrediction : creates
+    Recommender ..> AIPrediction : creates
+    Recommender "1" --> "0..1" LLMAdapter : asks first
     Recommender "1" --> "1" RuleBasedAdvisor : falls back to
-    Recommender "1" --> "1" LLMAdapter : uses
     class ImageClassifier {
-        CLIP model
-        classify(photo)
+        +model_name : get/set
+        +revision : get/set
+        +uncertain_below : get/set
+        +top_k : get/set
+        +is_loaded : get only
+        +initialize()
+        +classify(photo)
     }
     class AIPrediction {
-        kind
-        result
-        version
-        rating
+        +kind : get/set
+        +result : get/set
+        +model_name : get/set
+        +version : get/set
+        +product_id : get/set
+        +rating : get/set
+        +created_at : get only
+        +initialize()
+        +to_dict()
+        +save(path)
+        +latest(kind, product_id, path)
     }
     class Recommender {
-        reason
-        recommend(product)
+        +adapter : get/set
+        +advisor : get/set
+        +timeout : get/set
+        +reason : get only
+        +initialize(adapter, advisor)
+        +recommend(product, circularity_score)
     }
     class RuleBasedAdvisor {
-        fallback
-        advise(product)
+        +resale_reusability : get/set
+        +reuse_reusability : get/set
+        +repair_repairability : get/set
+        +min_resale_years : get/set
+        +current_year : get/set
+        +initialize(current_year)
+        +advise(product)
     }
     class LLMAdapter {
-        swappable
-        complete(prompt)
+        +provider : get/set
+        +model : get/set
+        +max_tokens : get/set
+        +base_url : get only
+        +has_api_key : get only
+        +last_model : get only
+        +last_version : get only
+        +last_finish_reason : get only
+        +initialize()
+        +complete(prompt, system, history, timeout)
     }
 ```
