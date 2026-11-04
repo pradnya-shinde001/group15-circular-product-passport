@@ -15,7 +15,7 @@ Each homework assignment has its own branch. The classes are added there.
 
 ## Presentation Link
 
-**Team video:** the link will be added here.
+**Team video:** [Watch the presentation](https://drive.google.com/file/d/1gRZJYISrGbB5JZBy0gtX5ykNN33evktm/view?usp=drive_link)
 
 ## Run it
 
