@@ -13,7 +13,7 @@ Group 15, Capstone Project, FH Dortmund. This branch contains Homework Assignmen
 
 ## Homework Assignment 2: Stream Processing Pipeline
 
-**5-minute video:** the link will be added here.
+**5-minute video:** [Link to the video](https://drive.google.com/file/d/1-0lijA2r9SuJ-EVze463hP_Z_T0hzpA9/view?usp=sharing)
 
 The pipeline ingests lifecycle events from across a product's supply chain, one at a time, and does two things:
 
