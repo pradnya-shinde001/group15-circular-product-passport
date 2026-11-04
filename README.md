@@ -15,7 +15,7 @@ Each homework assignment has its own branch. The classes are added there.
 
 ## Presentation Link
 
-**Team video:** the link will be added here.
+**Team video:** [Link to the video](https://drive.google.com/file/d/1gRZJYISrGbB5JZBy0gtX5ykNN33evktm/view?usp=drive_link)
 
 ## Run it
 
@@ -183,10 +183,10 @@ classDiagram
         +get_result()
     }
 
-    EventLedger "1" --> "0..*" LifecycleEvent : manages
+    EventLedger "1" --> "*" LifecycleEvent : manages
     EventLedger "1" --> "1" EventHasher : uses
     ChainVerifier "1" --> "1" EventHasher : uses
-    ChainVerifier "1" ..> "0..*" LifecycleEvent : verifies
+    ChainVerifier  ..>  LifecycleEvent : verifies
 ```
 
 ### Subsystem 3: Circularity score engine
