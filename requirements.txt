@@ -1,4 +1,4 @@
+qrcode
 Pillow
+bcrypt
 requests
-torch
-transformers
