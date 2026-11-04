@@ -2,3 +2,4 @@ qrcode
 Pillow
 bcrypt
 requests
+python-dotenv
