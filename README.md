@@ -1,6 +1,6 @@
 # AI-Powered Circular Economy Product Passport
 
-Group 15, Capstone Project, FH Dortmund. A digital passport for electronic products: a unique QR-based identity, a tamper-evident lifecycle history, a circularity score, and AI identification and advice.
+Group 15, Capstone Project, FH Dortmund. A digital passport for electronic products: a unique QR-based identity, a tamper-evident lifecycle history, a circularity score, and AI advice.
 
 Each homework assignment has its own branch. The classes are added there.
 
@@ -11,7 +11,7 @@ Each homework assignment has its own branch. The classes are added there.
 | Mosaddeka Mallick  | 1. Passport, QR code and web UI          | [subsystem1_passport](subsystem1_passport/)   |
 | Anishkumar Sukumar | 2. Event ledger (tamper-evident history) | [subsystem2_ledger](subsystem2_ledger/)       |
 | Rajib Munshi       | 3. Circularity score engine              | [subsystem3_score](subsystem3_score/)         |
-| Pradnya Shinde     | 4. AI engine (identification and advice) | [subsystem4_ai_engine](subsystem4_ai_engine/) |
+| Pradnya Shinde     | 4. AI engine (advice)                    | [subsystem4_ai_engine](subsystem4_ai_engine/) |
 
 ## Presentation Link
 
@@ -49,20 +49,32 @@ python -m subsystem4_ai_engine.demo
 
 The demos need no API key and no extra setup. Each subsystem runs on its own.
 
-### Optional: the real AI
+### Optional: the LLM
 
-The Subsystem 4 demo uses the rule-based advisor and does not load the CLIP image model. To identify a real photo with CLIP, install its large packages and give the demo a photo. The first run also downloads the model.
+The Subsystem 4 demo works without an API key and uses the rule-based advisor. To use the LLM instead:
 
-```bash
-pip install -r requirements-clip.txt
-python -m subsystem4_ai_engine.demo path/to/photo.jpg
-```
+1. Log in at https://chat.kiconnect.nrw, click your name at the bottom left, and create a key under API key management.
+2. Create your own `.env` file in the project folder:
 
-To use the LLM, set an API key from https://chat.kiconnect.nrw as an environment variable. The key is never stored in the code.
+   ```bash
+   cp .env.example .env               # Windows: copy .env.example .env
+   ```
 
-```bash
-export KICONNECT_API_KEY="your-key"
-```
+3. Open `.env` and replace `your-key` with your key:
+
+   ```text
+   KICONNECT_API_KEY=your-key
+   ```
+
+4. Run the demo. The last line should say `Answered by: llm`:
+
+   ```bash
+   python -m subsystem4_ai_engine.demo
+   ```
+
+If it says `Answered by: rules`, the demo could not get a usable answer from the LLM, so check your key and internet connection.
+
+Git ignores `.env`, so your key is not committed. Never put a real key in `.env.example`, the README or the code.
 
 ## System Design
 
@@ -244,61 +256,64 @@ classDiagram
 
 ### Subsystem 4: AI engine
 
+### Classes: `Recommender`, `LLMAdapter`, `RuleBasedAdvisor`, `AIPrediction`
+
 ```mermaid
 classDiagram
-    ImageClassifier ..> AIPrediction : creates
     Recommender ..> AIPrediction : creates
     Recommender "1" --> "0..1" LLMAdapter : asks first
     Recommender "1" --> "1" RuleBasedAdvisor : falls back to
-    class ImageClassifier {
-        +model_name : get/set
-        +revision : get/set
-        +uncertain_below : get/set
-        +top_k : get/set
-        +is_loaded : get only
-        +initialize()
-        +classify(photo)
-    }
     class AIPrediction {
-        +kind : get/set
-        +result : get/set
-        +model_name : get/set
-        +version : get/set
-        +product_id : get/set
-        +rating : get/set
-        +created_at : get only
+        -action
+        -reason
+        -source
+        -created_at
         +initialize()
-        +to_dict()
-        +save(path)
-        +latest(kind, product_id, path)
+        +get_action()
+        +set_action()
+        +get_reason()
+        +set_reason()
+        +get_source()
+        +set_source()
+        +get_created_at()
+        +set_created_at()
     }
     class Recommender {
-        +adapter : get/set
-        +advisor : get/set
-        +timeout : get/set
-        +reason : get only
-        +initialize(adapter, advisor)
-        +recommend(product, circularity_score)
+        -adapter
+        -advisor
+        +initialize()
+        +get_adapter()
+        +set_adapter()
+        +get_advisor()
+        +set_advisor()
+        +recommend(product)
     }
     class RuleBasedAdvisor {
-        +resale_reusability : get/set
-        +reuse_reusability : get/set
-        +repair_repairability : get/set
-        +min_resale_years : get/set
-        +current_year : get/set
-        +initialize(current_year)
+        -resale_minimum
+        -repair_minimum
+        -actions
+        +initialize()
+        +get_resale_minimum()
+        +set_resale_minimum()
+        +get_repair_minimum()
+        +set_repair_minimum()
+        +get_actions()
+        +set_actions()
         +advise(product)
     }
     class LLMAdapter {
-        +provider : get/set
-        +model : get/set
-        +max_tokens : get/set
-        +base_url : get only
-        +has_api_key : get only
-        +last_model : get only
-        +last_version : get only
-        +last_finish_reason : get only
+        -url
+        -model
+        -max_tokens
+        -api_key
         +initialize()
-        +complete(prompt, system, history, timeout)
+        +get_url()
+        +set_url()
+        +get_model()
+        +set_model()
+        +get_max_tokens()
+        +set_max_tokens()
+        +has_api_key()
+        +ask(question)
     }
 ```
