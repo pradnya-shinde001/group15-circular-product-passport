@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Register product{% endblock %}
+{% block content %}
+{% set v = values or {} %}
+{% set mats = v.materials if v and v.materials else [{}, {}, {}] %}
+<section class="card">
+  <h1>Register a product</h1>
+  <p class="muted">Fields marked * are required. Material shares must add up to 100 %.</p>
+  {% for e in errors %}<p class="alert error" role="alert">{{ e }}</p>{% endfor %}
+  <form method="post" action="/register" class="stack" id="register-form" novalidate>
+    <div class="row">
+      <label class="{{ 'missing' if 'name' in missing }}">Product name *
+        <input name="name" value="{{ v.name or '' }}" maxlength="200" autofocus></label>
+      <label>Model
+        <input name="model" value="{{ v.model or '' }}" maxlength="100"></label>
+    </div>
+    <div class="row">
+      <label class="{{ 'missing' if 'category' in missing }}">Category *
+        <input name="category" value="{{ v.category or '' }}" list="categories" maxlength="100"></label>
+      <datalist id="categories">{% for c in categories %}<option value="{{ c }}">{% endfor %}</datalist>
+      <label class="{{ 'missing' if 'lifespan_years' in missing }}">Expected lifespan (years) *
+        <input name="lifespan_years" value="{{ v.lifespan_years if v.lifespan_years is not none else '' }}" inputmode="decimal"></label>
+      <label>Spare parts available (%)
+        <input name="spare_parts_percent" value="{{ v.spare_parts_percent if v.spare_parts_percent is not none else '' }}" inputmode="decimal"></label>
+    </div>
+
+    <fieldset class="{{ 'missing' if 'materials' in missing }}">
+      <legend>Materials *</legend>
+      <div id="materials">
+        {% for m in mats %}
+        <div class="material">
+          <label>Material <input name="materials-{{ loop.index0 }}-material" value="{{ m.material or '' }}" placeholder="e.g. Aluminium"></label>
+          <label>Share % <input name="materials-{{ loop.index0 }}-percent" class="pct" value="{{ m.percent if m.percent is not none else '' }}" inputmode="decimal"></label>
+          <label>Recycled % <input name="materials-{{ loop.index0 }}-recycled" value="{{ m.recycled or '' }}" inputmode="decimal" placeholder="0"></label>
+          <label class="check"><input type="checkbox" name="materials-{{ loop.index0 }}-recyclable" {% if m.recyclable is not defined or m.recyclable %}checked{% endif %}> Recyclable</label>
+          <label class="check"><input type="checkbox" name="materials-{{ loop.index0 }}-hazard" {% if m.hazard %}checked{% endif %}> Hazardous</label>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="sum-line"><button type="button" class="button" id="add-material">+ Add material</button>
+        <span>Total: <strong id="sum">0</strong> %</span></p>
+    </fieldset>
+
+    <button class="button primary">Register and create passport</button>
+  </form>
+</section>
+<script>
+(function () {
+  var box = document.getElementById("materials"), sum = document.getElementById("sum");
+  function update() {
+    var total = 0;
+    box.querySelectorAll(".pct").forEach(function (i) { total += parseFloat(i.value.replace(",", ".")) || 0; });
+    sum.textContent = Math.round(total * 10) / 10;
+    sum.parentElement.className = Math.abs(total - 100) < 0.01 ? "good" : "bad";
+  }
+  document.getElementById("add-material").addEventListener("click", function () {
+    var rows = box.querySelectorAll(".material"), n = rows.length;
+    var copy = rows[rows.length - 1].cloneNode(true);
+    copy.querySelectorAll("input").forEach(function (i) {
+      i.name = i.name.replace(/materials-\d+-/, "materials-" + n + "-");
+      if (i.type === "checkbox") { i.checked = i.name.endsWith("recyclable"); } else { i.value = ""; }
+    });
+    box.appendChild(copy);
+    copy.querySelector("input").focus();
+  });
+  box.addEventListener("input", update);
+  update();
+})();
+</script>
+{% endblock %}

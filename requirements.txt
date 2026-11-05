@@ -3,3 +3,11 @@ Pillow
 bcrypt
 requests
 python-dotenv
+fastapi
+uvicorn
+jinja2
+python-multipart
+# tests
+pytest
+pytest-cov
+httpx

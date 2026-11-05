@@ -3,16 +3,19 @@ import io
 
 
 class QRCode:
-    def __init__(self, target_url):
-        """Constructor."""
+    def __init__(self, target_url, png_bytes=None):
+        """Constructor. Pass `png_bytes` when loading a stored image."""
         self._target_url = None
         self._png_bytes = None
-        self.initialize(target_url)
+        self.initialize(target_url, png_bytes)
 
-    def initialize(self, target_url):
-        """Initialization method: stores the URL and generates the image."""
+    def initialize(self, target_url, png_bytes=None):
+        """Initialization method: stores the URL and generates the image (unless given)."""
         self.set_target_url(target_url)
-        self.generate()
+        if png_bytes is None:
+            self.generate()
+        else:
+            self.set_png_bytes(png_bytes)
 
     # ---- getters ----
     def get_target_url(self):
@@ -37,6 +40,8 @@ class QRCode:
         """Builds the PNG. High error correction + 10 px boxes keep it readable at 2x2 cm (NFR 6)."""
         import qrcode  # imported here so the class can be loaded without the library
 
+        # A passport URL gives a 41x41 code: printed at 2 x 2 cm (with border) a module is ~0.4 mm,
+        # above the ~0.33 mm phone cameras need. Level Q survives 25 % damage.
         qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_Q, box_size=10, border=4)
         qr.add_data(self._target_url)
         qr.make(fit=True)

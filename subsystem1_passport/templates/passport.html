@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{{ p.name }}{% endblock %}
+{% block content %}
+{% if created %}<p class="alert ok" role="status">Product registered. Its passport and QR code are ready.</p>{% endif %}
+{% if p.archived %}<p class="alert warn">This product is archived. Its passport stays available for reference.</p>{% endif %}
+
+<section class="card head">
+  <div>
+    <p class="eyebrow">{{ p.category }}{% if p.model %} · {{ p.model }}{% endif %}</p>
+    <h1>{{ p.name }}</h1>
+    <p class="muted small">UUID <code class="uuid">{{ p.uuid }}</code></p>
+  </div>
+  {% set s = p.circularity_score %}
+  {% if s %}
+  <div class="score grade-{{ s.grade }}" aria-label="Circularity score {{ s.total }} of 100, grade {{ s.grade }}">
+    <span class="grade">{{ s.grade }}</span>
+    <span class="total">{{ "%.0f" | format(s.total) }}<small>/100</small></span>
+  </div>
+  {% endif %}
+</section>
+
+<div class="grid">
+  <section class="card">
+    <h2>Circularity score</h2>
+    {% if s %}
+      {% if s.incomplete %}<p class="alert warn small">Incomplete: missing data for {{ s.missing | join(", ") }} (counted as 0).</p>{% endif %}
+      <ul class="bars">
+        {% for sub in s.sub_scores %}
+        <li>
+          <span class="label">{{ sub.label }} <span class="muted">× {{ "%.2f" | format(sub.weight) }}</span></span>
+          <span class="bar"><span style="width: {{ sub.value or 0 }}%"></span></span>
+          <span class="value">{{ "–" if sub.value is none else "%.0f" | format(sub.value) }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+
+  <section class="card qr">
+    <h2>QR code</h2>
+    <img src="/passport/{{ p.uuid }}/qr.png" alt="QR code linking to this passport" width="164" height="164">
+    <p class="small muted">Scan to open this page. Prints readably at 2 × 2 cm.</p>
+    <p class="actions">
+      <a class="button" href="/passport/{{ p.uuid }}/qr.png?download=1">Download QR</a>
+      <a class="button" href="/api/products/{{ p.uuid }}/export">Export JSON</a>
+    </p>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Product details</h2>
+  <dl class="facts">
+    <div><dt>Expected lifespan</dt><dd>{{ p.lifespan_years | round(1) }} years</dd></div>
+    <div><dt>Spare parts available</dt><dd>{{ "not given" if p.spare_parts_percent is none else ("%.0f" | format(p.spare_parts_percent)) ~ " %" }}</dd></div>
+    <div><dt>Registered</dt><dd>{{ (p.created_at or "")[:10] }}</dd></div>
+  </dl>
+  <h3>Materials</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Material</th><th class="num">Share</th><th class="num">Recycled</th><th>Recyclable</th><th>Hazard</th></tr></thead>
+    <tbody>
+      {% for m in p.materials %}
+      <tr>
+        <td>{{ m.material }}</td>
+        <td class="num">{{ "%.0f" | format(m.percent) }} %</td>
+        <td class="num">{{ "%.0f" | format(m.recycled) }} %</td>
+        <td>{{ "Yes" if m.recyclable else "No" }}</td>
+        <td>{% if m.hazard %}<span class="tag danger">Hazardous</span>{% else %}–{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="card" id="history">
+  <h2>History
+    {% if p.history_check.valid %}<span class="tag ok">✓ verified</span>
+    {% else %}<span class="tag danger">⚠ changed at entry {{ p.history_check.first_broken_event }}</span>{% endif %}
+  </h2>
+  {% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}
+  <ol class="timeline">
+    {% for e in p.history | reverse %}
+    <li>
+      <span class="event">{{ e.event_type | capitalize }}</span>
+      <span class="muted small">{{ e.timestamp[:16] | replace("T", " ") }} · by {{ e.actor_role }}</span>
+      {% if e.details %}<p>{{ e.details }}</p>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% if allowed_events and not p.archived %}
+  <form method="post" action="/passport/{{ p.uuid }}/events" class="event-form">
+    <select name="event_type" aria-label="Event type" required>
+      {% for t in allowed_events %}<option value="{{ t }}">{{ t | capitalize }}</option>{% endfor %}
+    </select>
+    <input name="details" maxlength="1000" placeholder="Details (optional)" aria-label="Details">
+    <button class="button primary">Add event</button>
+  </form>
+  {% elif not user and not p.archived %}
+  <p class="small muted"><a href="/login?next=/passport/{{ p.uuid }}">Log in</a> to add a lifecycle event.</p>
+  {% endif %}
+</section>
+{% endblock %}

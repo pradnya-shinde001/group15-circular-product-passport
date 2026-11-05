@@ -3,26 +3,33 @@ import uuid as uuid_lib
 
 from .material_component import MaterialComponent
 
+# Fields a registration must contain (FR 1, FR 6).
+REQUIRED_FIELDS = ("name", "category", "lifespan_years", "materials")
+
 
 class Product:
-    def __init__(self, name, category, lifespan_years, model="", owner=None):
-        """Constructor."""
+    def __init__(self, name, category, lifespan_years, model="", owner=None,
+                 spare_parts_percent=None, uuid=None):
+        """Constructor. `uuid` is only passed when a stored product is loaded again."""
         self._uuid = None
         self._name = None
         self._model = ""
         self._category = None
         self._lifespan_years = None
+        self._spare_parts_percent = None
         self._owner = None
         self._materials = []
-        self.initialize(name, category, lifespan_years, model, owner)
+        self.initialize(name, category, lifespan_years, model, owner, spare_parts_percent, uuid)
 
-    def initialize(self, name, category, lifespan_years, model, owner):
+    def initialize(self, name, category, lifespan_years, model, owner,
+                   spare_parts_percent=None, uuid=None):
         """Initialization method: assigns a unique UUID (FR 2) and sets the fields."""
-        self._uuid = str(uuid_lib.uuid4())
+        self._uuid = str(uuid_lib.UUID(str(uuid))) if uuid else str(uuid_lib.uuid4())
         self.set_name(name)
         self.set_category(category)
         self.set_lifespan_years(lifespan_years)
         self.set_model(model)
+        self.set_spare_parts_percent(spare_parts_percent)
         if owner is not None:
             self.set_owner(owner)
 
@@ -41,6 +48,9 @@ class Product:
 
     def get_lifespan_years(self):
         return self._lifespan_years
+
+    def get_spare_parts_percent(self):
+        return self._spare_parts_percent
 
     def get_owner(self):
         return self._owner
@@ -63,9 +73,18 @@ class Product:
         self._category = category.strip()
 
     def set_lifespan_years(self, years):
-        if not isinstance(years, (int, float)) or years <= 0:
-            raise ValueError("Lifespan must be a positive number of years.")
+        if isinstance(years, bool) or not isinstance(years, (int, float)) or not 0 < years <= 100:
+            raise ValueError("Lifespan must be a positive number of years (at most 100).")
         self._lifespan_years = years
+
+    def set_spare_parts_percent(self, percent):
+        """Optional: share of parts available as spares. Used by the score engine."""
+        if percent is None:
+            self._spare_parts_percent = None
+            return
+        if isinstance(percent, bool) or not isinstance(percent, (int, float)) or not 0 <= percent <= 100:
+            raise ValueError("Spare parts must be a number between 0 and 100.")
+        self._spare_parts_percent = float(percent)
 
     def set_owner(self, user):
         self._owner = user
@@ -92,9 +111,20 @@ class Product:
         if not self._category:
             missing.append("category")
         if not self._lifespan_years:
-            missing.append("lifespan")
+            missing.append("lifespan_years")
         if not self._materials:
             missing.append("materials")
+        return missing
+
+    @staticmethod
+    def missing_in(data):
+        """FR 6 for raw form/JSON input, before any object exists: lists every missing field."""
+        missing = []
+        for field in REQUIRED_FIELDS:
+            value = data.get(field)
+            if value is None or (isinstance(value, (str, list)) and not value) or \
+                    (isinstance(value, str) and not value.strip()):
+                missing.append(field)
         return missing
 
     def validate(self):

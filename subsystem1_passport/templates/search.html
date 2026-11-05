@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>Find a product passport</h1>
+  <form method="get" action="/search" class="search">
+    <input type="search" name="q" value="{{ q }}" placeholder="UUID, name or category" aria-label="Search">
+    <select name="category" aria-label="Category">
+      <option value="">All categories</option>
+      {% for c in categories %}<option {% if c == category %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+    <button class="button primary">Search</button>
+  </form>
+</section>
+<section class="card">
+  <p class="muted">{{ total }} product{{ "" if total == 1 else "s" }} found</p>
+  {% if rows %}
+  <ul class="results">
+    {% for r in rows %}
+    <li>
+      <a href="/passport/{{ r.uuid }}">
+        <strong>{{ r.name }}</strong>{% if r.model %} <span class="muted">{{ r.model }}</span>{% endif %}
+        <span class="tag">{{ r.category }}</span>
+        <code class="uuid">{{ r.uuid }}</code>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% if pages > 1 %}
+  <nav class="pager">
+    {% if page > 1 %}<a href="?q={{ q | urlencode }}&category={{ category | urlencode }}&page={{ page - 1 }}">← Previous</a>{% endif %}
+    <span>Page {{ page }} of {{ pages }}</span>
+    {% if page < pages %}<a href="?q={{ q | urlencode }}&category={{ category | urlencode }}&page={{ page + 1 }}">Next →</a>{% endif %}
+  </nav>
+  {% endif %}
+  {% else %}
+  <p>No products match. Try part of the name, a category, or the first characters of the UUID.</p>
+  {% endif %}
+</section>
+{% endblock %}

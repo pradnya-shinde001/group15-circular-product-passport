@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Product Passport{% endblock %} · Circular Passport</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/search">♻ Circular Passport</a>
+    <nav>
+      <a href="/search">Search</a>
+      {% if user and user.role in ("admin", "manufacturer") %}<a href="/register">Register product</a>{% endif %}
+      {% if user %}
+        <span class="who" title="{{ user.email }}">{{ user.role }}</span>
+        <form method="post" action="/logout" class="inline"><button class="link">Log out</button></form>
+      {% else %}
+        <a href="/login?next={{ request.url.path | urlencode }}">Log in</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>Group 15 · AI-Powered Circular Economy Product Passport · <a href="/docs">API docs</a></footer>
+</body>
+</html>
