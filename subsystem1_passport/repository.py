@@ -1,11 +1,3 @@
-"""Service layer: every read/write of Subsystem 1 goes through here (plain sqlite3 + SQL).
-
-It turns database rows into the domain classes (User, Product, MaterialComponent, Passport,
-QRCode), so the rules in those classes are applied for the API and the web pages alike.
-It also connects the other subsystems:
-  * Subsystem 2: who may add which lifecycle event, and hashing / verifying the history chain.
-  * Subsystem 3: the circularity score shown on the passport page.
-"""
 import sqlite3
 from datetime import datetime, timezone
 
@@ -31,7 +23,6 @@ _score_calculator = ScoreCalculator()
 
 # ---------------------------------------------------------------- errors
 class IncompleteRegistration(ValueError):
-    """FR 6: carries the list of missing fields."""
 
     def __init__(self, missing):
         self.missing = list(missing)
@@ -109,7 +100,6 @@ def list_users(db):
 
 # ---------------------------------------------------------------- products
 def build_product(data, uuid=None):
-    """Builds and validates a domain Product from raw input (FR 1, 5, 6)."""
     missing = Product.missing_in(data)
     if missing:
         raise IncompleteRegistration(missing)
@@ -152,7 +142,6 @@ def _insert_materials(db, product_id, product):
 
 
 def insert_product(db, product, owner_row):
-    """Stores a validated Product. Returns its row (no commit, the caller decides)."""
     now = _now_iso()
     cur = db.execute(
         "INSERT INTO products (uuid, name, model, category, lifespan_years, spare_parts_percent, owner_id, "
@@ -169,7 +158,6 @@ def insert_product(db, product, owner_row):
 
 
 def register_product(db, data, owner_row, base_url):
-    """FR 1-3: validate, give a new UUID, store, create the QR code, start the history."""
     if not to_user(owner_row).can("register_product"):
         raise Forbidden("Your role cannot register products.")
     product = build_product(data)
@@ -184,7 +172,6 @@ def register_product(db, data, owner_row, base_url):
 
 
 def update_product(db, row, data, user_row):
-    """Edit product data (login + permission required, NFR 5 / FR 8). The UUID never changes."""
     user = to_user(user_row)
     is_owner = row.owner_id == user_row.id
     if not (user.can("edit_any_product") or (is_owner and user.can("edit_own_product"))):
@@ -215,7 +202,6 @@ def update_product(db, row, data, user_row):
 
 
 def archive_product(db, row, user_row):
-    """NFR 7: no hard deletes. The passport stays reachable and is marked as archived."""
     if not to_user(user_row).can("archive_product"):
         raise Forbidden("Only an admin can archive products.")
     if not row.archived:
@@ -226,7 +212,6 @@ def archive_product(db, row, user_row):
 
 
 def get_product(db, uuid):
-    """One product with its active materials and its history."""
     r = db.execute("SELECT * FROM products WHERE uuid = ?", (str(uuid).strip().lower(),)).fetchone()
     if r is None:
         raise NotFound("No product with this UUID.")
@@ -239,7 +224,6 @@ def get_product(db, uuid):
 
 
 def search_products(db, q="", category="", page=1, page_size=20, include_archived=False):
-    """FR 7: search by UUID (full or first characters), name, or category. Returns (rows, total)."""
     page = max(int(page or 1), 1)
     page_size = min(max(int(page_size or 20), 1), MAX_PAGE_SIZE)
     where, params = [], []
@@ -270,7 +254,6 @@ def list_categories(db):
 
 # ---------------------------------------------------------------- QR code
 def get_qr_code(db, row, base_url, commit=True):
-    """FR 3: the stored QR PNG. Created on first use, or again if the public URL changed."""
     passport_url = f"{base_url.rstrip('/')}/passport/{row.uuid}"
     r = db.execute("SELECT target_url, png_bytes FROM qr_codes WHERE product_id = ?", (row.id,)).fetchone()
     if r is not None and r["target_url"] == passport_url:
@@ -287,7 +270,6 @@ def get_qr_code(db, row, base_url, commit=True):
 
 # ---------------------------------------------------------------- history (Subsystem 2 rules)
 def append_event(db, row, actor_row, event_type, details):
-    """Adds one hash-chained entry to the history (no commit, the caller decides)."""
     previous = row.history[-1].event_hash if row.history else GENESIS_HASH
     event = HistoryEventRow(row.uuid, event_type, _now_iso(), actor_row.email, actor_row.role,
                             details or "", previous)
@@ -303,7 +285,6 @@ def append_event(db, row, actor_row, event_type, details):
 
 
 def add_lifecycle_event(db, row, user_row, event_type, details=""):
-    """Adds a lifecycle event, using Subsystem 2's list of who may add which event."""
     if event_type not in EVENT_TYPES:
         raise ValueError(f"Event type must be one of {EVENT_TYPES}.")
     if user_row.role not in EVENT_PERMISSIONS[event_type]:
@@ -324,7 +305,6 @@ def verify_history(row):
 
 # ---------------------------------------------------------------- score (Subsystem 3)
 def circularity_score(row):
-    """FR 9: score from Subsystem 3, recalculated from the stored data on every view."""
     product = {
         "product_id": row.uuid,
         "category": row.category,
@@ -339,7 +319,6 @@ def circularity_score(row):
 
 # ---------------------------------------------------------------- passport
 def build_passport(row, base_url):
-    """FR 4, 9, 10: everything the public page and the JSON export show."""
     passport = Passport(to_product(row), base_url)
     passport.set_score(circularity_score(row))
     for event in row.history:

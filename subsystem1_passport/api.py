@@ -1,4 +1,3 @@
-"""REST API (JSON, standard HTTP status codes - NFR 8). Documented at /docs and /redoc (NFR 9)."""
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status

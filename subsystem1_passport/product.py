@@ -1,9 +1,8 @@
-"""Product: the registered item (UML: Product has uuid, name, model, category, lifespan)."""
+
 import uuid as uuid_lib
 
 from .material_component import MaterialComponent
 
-# Fields a registration must contain (FR 1, FR 6).
 REQUIRED_FIELDS = ("name", "category", "lifespan_years", "materials")
 
 
@@ -23,7 +22,7 @@ class Product:
 
     def initialize(self, name, category, lifespan_years, model, owner,
                    spare_parts_percent=None, uuid=None):
-        """Initialization method: assigns a unique UUID (FR 2) and sets the fields."""
+        """Initialization method: assigns a unique UUID and sets the fields."""
         self._uuid = str(uuid_lib.UUID(str(uuid))) if uuid else str(uuid_lib.uuid4())
         self.set_name(name)
         self.set_category(category)
@@ -78,7 +77,7 @@ class Product:
         self._lifespan_years = years
 
     def set_spare_parts_percent(self, percent):
-        """Optional: share of parts available as spares. Used by the score engine."""
+     
         if percent is None:
             self._spare_parts_percent = None
             return
@@ -100,11 +99,11 @@ class Product:
         return sum(m.get_percent() for m in self._materials)
 
     def materials_valid(self):
-        """FR 5: material percentages must sum to 100 %."""
+   
         return abs(self.total_percent() - 100.0) < 0.01
 
     def missing_fields(self):
-        """FR 6: names every missing field of an incomplete registration."""
+       
         missing = []
         if not self._name:
             missing.append("name")
@@ -118,7 +117,6 @@ class Product:
 
     @staticmethod
     def missing_in(data):
-        """FR 6 for raw form/JSON input, before any object exists: lists every missing field."""
         missing = []
         for field in REQUIRED_FIELDS:
             value = data.get(field)

@@ -1,9 +1,3 @@
-"""SQLite database with Python's built-in sqlite3 module (same approach as Rajib's db.py).
-
-Tables: users, products, material_components, qr_codes, and the append-only history_events.
-Triggers make NFR 7 hold in the database itself: products and history rows cannot be deleted,
-history rows cannot be changed, and a product's UUID cannot be changed.
-"""
 import os
 import sqlite3
 from contextlib import contextmanager
@@ -86,7 +80,7 @@ def connect(path):
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     if path != ":memory:":
-        conn.execute("PRAGMA journal_mode = WAL")  # readers do not wait for writers
+        conn.execute("PRAGMA journal_mode = WAL")  
     return conn
 
 
@@ -105,7 +99,7 @@ class Database:
         try:
             yield conn
         finally:
-            if conn.in_transaction:  # anything not committed is discarded
+            if conn.in_transaction: 
                 conn.rollback()
             if conn is not self._shared:
                 conn.close()

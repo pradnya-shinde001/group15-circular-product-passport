@@ -1,4 +1,3 @@
-"""User: an account that can own products (UML: User 1 --- * Product, 'owns')."""
 import os
 import re
 
@@ -6,9 +5,8 @@ import bcrypt
 
 
 class User:
-    ROLES = ("admin", "manufacturer", "recycler", "consumer")  # four roles (FR 8)
+    ROLES = ("admin", "manufacturer", "recycler", "consumer")
 
-    # FR 8: what each role may do. Lifecycle events follow Subsystem 2's EventLedger rules.
     PERMISSIONS = {
         "admin": {"register_product", "edit_any_product", "edit_own_product",
                   "archive_product", "manage_users", "add_event"},
@@ -17,12 +15,11 @@ class User:
         "consumer": {"add_event"},
     }
 
-    # Cost factor 12 by default (NFR 5). Tests lower it with BCRYPT_ROUNDS to run fast.
     BCRYPT_ROUNDS = int(os.environ.get("BCRYPT_ROUNDS", "12"))
     _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
     def __init__(self, email, role="consumer", password=None, password_hash=None):
-        """Constructor: sets the initial state."""
+
         self._email = None
         self._role = None
         self._password_hash = None
@@ -30,8 +27,7 @@ class User:
         self.initialize(email, role, password, password_hash)
 
     def initialize(self, email, role, password, password_hash=None):
-        """Initialization method: validates and configures the object.
-        Pass `password` for a new account, or `password_hash` when loading a stored one."""
+
         self.set_email(email)
         self.set_role(role)
         if password is not None:
@@ -64,7 +60,7 @@ class User:
         self._role = role
 
     def set_password(self, plain_password):
-        """Stores only a bcrypt hash, never the plain password (NFR 5)."""
+
         if not isinstance(plain_password, str) or len(plain_password) < 8:
             raise ValueError("Password must be at least 8 characters.")
         if len(plain_password.encode()) > 72:
@@ -87,11 +83,9 @@ class User:
             return False
 
     def can(self, permission):
-        """FR 8: True if this user's role grants the permission."""
         return permission in self.PERMISSIONS[self._role]
 
     def can_edit(self):
-        """Login is required to edit; consumers and recyclers cannot edit product data (FR 8)."""
         return self.can("edit_own_product")
 
     def add_product(self, product):

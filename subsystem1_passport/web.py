@@ -1,8 +1,3 @@
-"""Web UI (interface prototype): product search, public passport page, registration form, login.
-
-Server-rendered HTML with Jinja2, no JavaScript framework, so the passport page is small and
-fast (NFR 1) and works on phones from 360 px (NFR 3).
-"""
 from pathlib import Path
 from urllib.parse import quote
 
@@ -24,7 +19,6 @@ def _render(request, name, context, status_code=200):
 
 
 def _safe_next(target):
-    """Only redirect to paths on this site (no open redirects)."""
     return target if isinstance(target, str) and target.startswith("/") and not target.startswith("//") else "/"
 
 
@@ -43,7 +37,6 @@ def _number(text):
 
 
 def parse_registration_form(form):
-    """Reads the registration form. Material rows are named materials-<i>-<field>."""
     data = {
         "name": (form.get("name") or "").strip(),
         "model": (form.get("model") or "").strip(),
@@ -78,7 +71,6 @@ def home():
 @router.get("/search", response_class=HTMLResponse)
 def search_page(request: Request, q: str = "", category: str = "", page: int = 1,
                 db=Depends(get_db), user=Depends(optional_user)):
-    """FR 7: search products by UUID, name or category."""
     page = max(page, 1)
     rows, total = repo.search_products(db, q, category, page, PAGE_SIZE)
     pages = max((total + PAGE_SIZE - 1) // PAGE_SIZE, 1)
@@ -89,7 +81,6 @@ def search_page(request: Request, q: str = "", category: str = "", page: int = 1
 
 @router.get("/passport/{uuid}", response_class=HTMLResponse)
 def passport_page(uuid: str, request: Request, db=Depends(get_db), user=Depends(optional_user)):
-    """FR 4 and 9: the public page a QR scan opens. No login needed."""
     try:
         row = repo.get_product(db, uuid)
     except repo.NotFound:
@@ -137,7 +128,6 @@ async def passport_add_event(uuid: str, request: Request, db=Depends(get_db),
 
 @router.get("/register", response_class=HTMLResponse)
 def register_page(request: Request, db=Depends(get_db), user=Depends(optional_user)):
-    """Registration form (FR 1). Login required (NFR 5)."""
     if user is None:
         return _to_login(request)
     if not repo.to_user(user).can("register_product"):

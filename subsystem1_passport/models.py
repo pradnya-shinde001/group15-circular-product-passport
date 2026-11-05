@@ -1,8 +1,3 @@
-"""Plain records for the rows read from SQLite.
-
-They only hold data. The rules live in the domain classes (User, Product, ...);
-repository.py converts between the two.
-"""
 from dataclasses import dataclass, field
 
 

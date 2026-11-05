@@ -1,12 +1,3 @@
-"""Fill the database with demo users and synthetic products.
-
-Adapted from Rajib's prototype (generate_data.py): same product names, manufacturers and
-lifecycle pattern (manufactured -> sold -> used -> repaired ...), but every product goes
-through the Subsystem 1 validation and gets a UUID, materials and a hash-chained history.
-
-    python -m subsystem1_passport.seed                 # 4 demo users + 100 products
-    python -m subsystem1_passport.seed --count 10000   # load test for NFR 2
-"""
 import argparse
 import random
 import time
@@ -22,7 +13,6 @@ DEMO_USERS = {
     "consumer@demo.local": "consumer",
 }
 
-# From Rajib's generate_data.py
 PRODUCT_NAMES = [
     ("ThinkPad Laptop", "Laptop", "Lenovo"),
     ("Galaxy Smartphone", "Smartphone", "Samsung"),
@@ -31,14 +21,13 @@ PRODUCT_NAMES = [
     ("Eco Laptop", "Laptop", "HP"),
     ("Office Monitor", "Monitor", "LG"),
 ]
-MATERIALS = [  # material, recyclable, hazard
+MATERIALS = [ 
     ("Aluminium", True, False), ("Plastic", True, False), ("Copper", True, False),
     ("Glass", True, False), ("Lithium battery", True, True),
 ]
 
 
 def random_materials(rng):
-    """3-5 materials whose shares add up to exactly 100 %."""
     chosen = rng.sample(MATERIALS, rng.randint(3, len(MATERIALS)))
     cuts = sorted(rng.sample(range(5, 96, 5), len(chosen) - 1))
     shares = [b - a for a, b in zip([0] + cuts, cuts + [100])]

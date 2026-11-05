@@ -1,6 +1,3 @@
-"""MaterialComponent: one material a product is made of (Product 1 --- * MaterialComponent)."""
-
-
 class MaterialComponent:
     def __init__(self, material, percent, recycled=False, hazard=False, recyclable=True):
         """Constructor.

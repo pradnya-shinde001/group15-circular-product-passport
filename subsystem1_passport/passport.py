@@ -1,4 +1,4 @@
-"""Passport: the public page data for one product (Product 1 --- 1 Passport)."""
+
 import json
 
 from .qr_code import QRCode

@@ -1,7 +1,7 @@
 """FastAPI application for Subsystem 1.
 
 Run:  uvicorn subsystem1_passport.app:create_app --factory --reload
-Then: http://localhost:8000 (web UI), http://localhost:8000/docs (API docs, NFR 9)
+Then: http://localhost:8000 (web UI), http://localhost:8000/docs 
 """
 import logging
 import os

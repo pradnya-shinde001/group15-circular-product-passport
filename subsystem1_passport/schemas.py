@@ -1,8 +1,3 @@
-"""Request and response shapes of the REST API. FastAPI turns them into the OpenAPI docs (NFR 9).
-
-Product input fields are optional on purpose: the service then lists *all* missing
-fields in one 422 answer (FR 6) instead of failing on the first one.
-"""
 from pydantic import BaseModel, ConfigDict, Field
 
 

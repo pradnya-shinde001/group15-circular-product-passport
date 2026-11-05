@@ -57,21 +57,21 @@ Events out: 6
 
 All of these are in `stream_core/processors.py`.
 
-| Concept                      | Where                                                                       |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| Abstract base classes        | `StreamProcessor`, `FilterProcessor`, `TransformProcessor`                  |
-| Inheritance and polymorphism | Every step has `process()`, and `Pipeline.process()` calls them the same way |
-| Operator overloading         | `__or__` joins steps: `step_a \| step_b`                                    |
+| Concept                      | Where                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------ |
+| Abstract base classes        | `StreamProcessor`, `FilterProcessor`, `TransformProcessor`                     |
+| Inheritance and polymorphism | Every step has `process()`, and `Pipeline.process()` calls them the same way   |
+| Operator overloading         | `__or__` joins steps: `step_a \| step_b`                                       |
 | Iterators and generators     | `EventStream` has `__iter__` and `__next__`, and `Pipeline.run()` uses `yield` |
 
 ### What each subsystem adds
 
-| Subsystem    | File                                    | Steps                                                                              |
-| ------------ | --------------------------------------- | ---------------------------------------------------------------------------------- |
-| 1. Passport  | `subsystem1_passport/stream_steps.py`   | `RegisteredProductFilter`, `PassportHistoryStep`                                   |
-| 2. Ledger    | `subsystem2_ledger/stream_filters.py`   | `VerifiedEventFilter`, `SequenceFilter`                                            |
-| 3. Score     | `subsystem3_score/stream_transforms.py` | `RecyclabilityIndexTransform`, `RemainingLifeTransform`, `RepairabilityTransform`  |
-| 4. AI engine | `subsystem4_ai_engine/stream_advice.py` | `AdviceTransform`                                                                  |
+| Subsystem    | File                                    | Steps                                                                             |
+| ------------ | --------------------------------------- | --------------------------------------------------------------------------------- |
+| 1. Passport  | `subsystem1_passport/stream_steps.py`   | `RegisteredProductFilter`, `PassportHistoryStep`                                  |
+| 2. Ledger    | `subsystem2_ledger/stream_filters.py`   | `VerifiedEventFilter`, `SequenceFilter`                                           |
+| 3. Score     | `subsystem3_score/stream_transforms.py` | `RecyclabilityIndexTransform`, `RemainingLifeTransform`, `RepairabilityTransform` |
+| 4. AI engine | `subsystem4_ai_engine/stream_advice.py` | `AdviceTransform`                                                                 |
 
 ### Formulas
 
@@ -217,3 +217,25 @@ classDiagram
     AdviceTransform --> Recommender : uses
     PassportHistoryStep --> Passport : updates
 ```
+
+## Homework Assignment 3: Web API and Database Access Layer
+
+### Subsystem 1: Passport, QR code and web UI (Mosaddeka Mallick)
+
+FastAPI web app with a SQLite database (Python's `sqlite3`). Use Python 3.11 or newer: on a Mac, create the venv with `python3.14 -m venv venv`, because the default `python3` is 3.9.
+
+```bash
+pip install -r requirements.txt
+python -m subsystem1_passport.seed
+uvicorn subsystem1_passport.app:create_app --factory --reload
+```
+
+- Web UI: http://localhost:8000 (search, public passport page, product registration)
+- API docs (OpenAPI): http://localhost:8000/docs
+- Demo logins (password `demo-pass-123`): `admin@demo.local`, `maker@demo.local`, `recycler@demo.local`, `consumer@demo.local`
+
+**Database tables:** `users`, `products`, `material_components`, `qr_codes`, `history_events`. Every product is identified by `products.uuid`, which the other subsystems use to refer to a product. Database triggers prevent deleting products and changing history (no hard deletes).
+
+**Access layer:** `subsystem1_passport/database.py` (schema and connections) and `subsystem1_passport/repository.py` (all SQL queries). The web pages and the API only call the repository.
+
+Details, settings and the list of requirements: [subsystem1_passport/README.md](subsystem1_passport/README.md)

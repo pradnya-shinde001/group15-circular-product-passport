@@ -1,9 +1,3 @@
-"""Login tokens and FastAPI dependencies (NFR 5: login required to edit).
-
-A token is `<payload>.<signature>`: the payload holds the user id and the expiry time,
-the signature is HMAC-SHA256 with SECRET_KEY. The API reads it from the
-`Authorization: Bearer ...` header, the web pages from an HttpOnly cookie.
-"""
 import base64
 import hashlib
 import hmac
@@ -35,7 +29,6 @@ def create_token(user_id: int, secret: str, ttl_seconds: int) -> str:
 
 
 def read_token(token: str, secret: str):
-    """Returns the user id, or None if the token is malformed, forged or expired."""
     try:
         payload, signature = token.split(".")
         expected = _b64(hmac.new(secret.encode(), payload.encode(), hashlib.sha256).digest())
@@ -51,7 +44,6 @@ def read_token(token: str, secret: str):
 
 # ---------------------------------------------------------------- dependencies
 def get_db(request: Request):
-    """One sqlite3 connection per request; uncommitted changes are rolled back."""
     with request.app.state.database.connection() as conn:
         yield conn
 
