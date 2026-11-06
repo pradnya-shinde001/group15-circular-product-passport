@@ -1,6 +1,17 @@
+# Python
 __pycache__/
 *.pyc
+
+# Virtual environments
 venv/
 .venv/
+
+# Secrets: the real API key lives only in .env (.env.example is still committed)
 .env
- *.png
+
+# The demo database: the app or "python -m database.seed" rebuilds it
+database/*.db
+database/*.db-journal
+
+# Images made by the demos, e.g. passport_qr.png from the Subsystem 1 demo
+*.png
