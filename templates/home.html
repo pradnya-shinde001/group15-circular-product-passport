@@ -1,28 +1,43 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <h1>Find a product passport</h1>
 <form method="get" action="/" class="actions">
-  <div style="flex:1;min-width:200px"><input name="q" value="{{ q }}" placeholder="Name, model, category or UUID" aria-label="Search"></div>
+  <div style="flex: 1; min-width: 200px">
+    <input
+      name="q"
+      value="{{ q }}"
+      placeholder="Name, model, category or UUID"
+      aria-label="Search"
+    />
+  </div>
   <button>Search</button>
 </form>
 
 <div class="card scroll">
-{% if products %}
+  {% if products %}
   <table>
-    <tr><th>Product</th><th>Model</th><th>Category</th><th>Score</th><th>Grade</th></tr>
+    <tr>
+      <th>Product</th>
+      <th>Model</th>
+      <th>Category</th>
+      <th>Score</th>
+      <th>Grade</th>
+    </tr>
     {% for p in products %}
     <tr>
       <td><a href="/passport/{{ p.uuid }}">{{ p.name }}</a></td>
       <td>{{ p.model }}</td>
       <td>{{ p.category }}</td>
       <td>{{ p.total if p.total is not none else "-" }}</td>
-      <td>{% if p.grade %}<span class="grade small">{{ p.grade }}</span>{% endif %}</td>
+      <td>
+        {% if p.grade %}<span class="grade small">{{ p.grade }}</span>{% endif
+        %}
+      </td>
     </tr>
     {% endfor %}
   </table>
-{% else %}
+  {% else %}
   <p>No products found{% if q %} for "{{ q }}"{% endif %}.</p>
-{% endif %}
+  {% endif %}
 </div>
-<p class="muted">Every row comes from the products and circularity_scores tables. See the <a href="/database">Database</a> page for all tables.</p>
+
 {% endblock %}
