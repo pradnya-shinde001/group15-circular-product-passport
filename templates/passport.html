@@ -1,5 +1,6 @@
 {% extends "base.html" %} {% block title %}{{ product.name }} passport{%
 endblock %} {% block content %}
+<p><a href="/">← Back to all products</a></p>
 <h1>{{ product.name }}</h1>
 <p class="muted">
   {{ product.category }}{% if product.model %} · model {{ product.model }}{%

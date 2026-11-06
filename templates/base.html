@@ -246,11 +246,12 @@
     <header>
       <nav>
         <a class="brand" href="/">♻️ Product Passport</a>
+        <a href="/">Home</a>
         {% if can_register %}
         <a href="/register">Register product</a>
         {% endif %}
         <!-- <a href="/database">Database</a> -->
-        <a href="/docs">API</a>
+        <a href="/docs" target="_blank" rel="noopener">API</a>
         {% if user %}
         <span class="who">{{ user.email }} ({{ user.role }})</span>
         <form method="post" action="/logout" style="margin: 0">
