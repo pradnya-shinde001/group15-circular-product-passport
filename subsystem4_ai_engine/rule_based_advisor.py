@@ -1,4 +1,5 @@
 """RuleBasedAdvisor: chooses an action using simple fixed rules."""
+from .errors import InvalidProductError
 
 
 class RuleBasedAdvisor:
@@ -30,8 +31,15 @@ class RuleBasedAdvisor:
     def set_actions(self, actions):
         self._actions = actions
 
+    def check_product(self, product):
+        """Raise InvalidProductError when the product data misses something the rules need."""
+        for key in ("condition", "repairability_score", "reusability_score"):
+            if key not in product or product[key] is None:
+                raise InvalidProductError(f"The product data has no {key}.")
+
     def advise(self, product):
         """Return the action and the reason for one product."""
+        self.check_product(product)
         condition = product["condition"]
         reusability = product["reusability_score"]
         repairability = product["repairability_score"]
