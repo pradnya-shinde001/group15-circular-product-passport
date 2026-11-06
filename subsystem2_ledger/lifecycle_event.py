@@ -7,14 +7,15 @@ class LifecycleEvent:
 
     EVENT_TYPES: ClassVar[list[str]] = ["manufactured", "sold", "used", "repaired", "refurbished", "recycled"]
 
-    def __init__(self, product_uuid, event_type, actor_email, details, previous_hash):
-        """Constructor."""
-        self.initialize(product_uuid, event_type, actor_email, details, previous_hash)
+    def __init__(self, product_uuid, event_type, actor_email, details, previous_hash, timestamp=None):
+        """Constructor. Without a timestamp, the event is dated now."""
+        self.initialize(product_uuid, event_type, actor_email, details, previous_hash, timestamp)
 
     # Initialization
 
-    def initialize(self, product_uuid, event_type, actor_email, details, previous_hash):
-        """Initialization method."""
+    def initialize(self, product_uuid, event_type, actor_email, details, previous_hash, timestamp=None):
+        """Initialization method. `timestamp` is an optional datetime with a time zone,
+        for recording an event that happened earlier, for example in demo data."""
 
         if getattr(self, "_sealed", False):
             raise ValueError("Event is already initialized and sealed.")
@@ -22,10 +23,17 @@ class LifecycleEvent:
         if event_type not in self.EVENT_TYPES:
             raise ValueError("Invalid event type.")
 
+        if timestamp is None:
+            timestamp = datetime.now(UTC)
+        elif not isinstance(timestamp, datetime) or timestamp.tzinfo is None:
+            raise ValueError("Timestamp must be a datetime with a time zone.")
+        elif timestamp > datetime.now(UTC):
+            raise ValueError("Timestamp cannot be in the future.")
+
         self._sealed = False
         self._product_uuid = product_uuid
         self._event_type = event_type
-        self._timestamp = datetime.now(UTC).isoformat()
+        self._timestamp = timestamp.astimezone(UTC).isoformat()
         self._actor_email = actor_email
         self._details = deepcopy(details)
         self._previous_hash = previous_hash
