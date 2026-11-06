@@ -16,6 +16,7 @@ Group 15, Capstone Project, FH Dortmund. This branch contains Homework Assignmen
 **5-minute video:** [Link to the video](https://drive.google.com/file/d/1-0lijA2r9SuJ-EVze463hP_Z_T0hzpA9/view?usp=sharing)
 
 The pipeline ingests lifecycle events from across a product's supply chain, one at a time, and does two things:
+**Team video:** [Link to the video](https://drive.google.com/file/d/1gRZJYISrGbB5JZBy0gtX5ykNN33evktm/view?usp=drive_link)
 
 1. **Filter:** drops events that are unverified or out of sequence.
 2. **Transform:** turns the verified events into a dynamic Recyclability Index and the percentage of functional life remaining.
@@ -155,6 +156,19 @@ classDiagram
     FilterProcessor <|-- VerifiedEventFilter
     FilterProcessor <|-- SequenceFilter
     VerifiedEventFilter --> EventHasher : uses
+    class ChainVerifier {
+        -_genesis_hash: str
+        -_result: dict
+        -_event_hasher: EventHasher
+        +verify_chain(events)
+        +first_broken_event()
+        +get_result()
+    }
+
+    EventLedger "1" --> "*" LifecycleEvent : manages
+    EventLedger "1" --> "1" EventHasher : uses
+    ChainVerifier "1" --> "1" EventHasher : uses
+    ChainVerifier  ..>  LifecycleEvent : verifies
 ```
 
 #### 3. Score transform steps (Subsystem 3)
