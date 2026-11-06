@@ -138,7 +138,21 @@ endblock %} {% block content %}
       {% endfor %}
     </table>
   </div>
+  {# The events that fit the order: 'manufactured' first and only once, nothing after 'recycled'. #}
+  {% set past = events | map(attribute="event_type") | list %}
+  {% set ns = namespace(options=[]) %}
   {% if user %}
+  {% for t, roles in permissions.items() if user.role in roles %}
+  {% if ("manufactured" not in past and t == "manufactured") or ("manufactured" in past and t != "manufactured") %}
+  {% set ns.options = ns.options + [t] %}
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+  {% if user and "recycled" in past %}
+  <p>This product was recycled. No more events can be added.</p>
+  {% elif user and not ns.options %}
+  <p>This product must be manufactured first. A manufacturer or an admin can record that.</p>
+  {% elif user %}
   <form
     method="post"
     action="/passport/{{ product.uuid }}/events"
@@ -147,7 +161,7 @@ endblock %} {% block content %}
     <div>
       <label for="event_type">Event</label>
       <select id="event_type" name="event_type">
-        {% for t, roles in permissions.items() if user.role in roles %}
+        {% for t in ns.options %}
         <option value="{{ t }}">{{ t }}</option>
         {% endfor %}
       </select>

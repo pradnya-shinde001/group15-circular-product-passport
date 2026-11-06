@@ -33,6 +33,7 @@ class LedgerService:
         allowed = EVENT_PERMISSIONS[event_type]
         if actor["role"] not in allowed:
             raise PermissionError(f"A {actor['role']} may not record '{event_type}'. Allowed: {', '.join(allowed)}.")
+        self.check_order(product_uuid, event_type)
         previous_hash = self._repository.last_hash(product_uuid) or EventLedger.GENESIS_HASH
         details = {"note": note.strip()} if note and note.strip() else {}
         try:
@@ -50,6 +51,20 @@ class LedgerService:
         if self._on_event is not None:
             self._on_event(event)
         return event
+
+    def check_order(self, product_uuid, event_type):
+        """Check that the new event fits the product's history so far.
+        Raises ValueError with a message when it does not."""
+        past_events = []
+        for event in self._repository.history(product_uuid):
+            past_events.append(event.get_event_type())
+
+        if "recycled" in past_events:
+            raise ValueError(["This product was recycled. No more events can be added."])
+        if event_type == "manufactured" and "manufactured" in past_events:
+            raise ValueError(["This product was already manufactured."])
+        if event_type != "manufactured" and "manufactured" not in past_events:
+            raise ValueError(["The first event must be 'manufactured'."])
 
     def history(self, product_uuid):
         """All events as dicts, oldest first."""
