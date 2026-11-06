@@ -1,5 +1,6 @@
 """RecommendationService: Subsystem 4's work on the shared database.
 Asks the Recommender for one product and stores the answer."""
+from .errors import ProductNotFoundError
 from .llm_adapter import LLMAdapter
 from .recommendation_repository import RecommendationRepository
 from .recommender import Recommender
@@ -22,7 +23,7 @@ class RecommendationService:
         The LLM answers when use_llm is True and a key is set; otherwise the rule-based advisor does."""
         product = self._repository.product_data(product_uuid)
         if product is None:
-            raise LookupError(f"No product with the UUID {product_uuid}.")
+            raise ProductNotFoundError(product_uuid)
 
         if use_llm:
             adapter = LLMAdapter()

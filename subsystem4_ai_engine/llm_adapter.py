@@ -5,6 +5,8 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+from .errors import LLMError
+
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 
@@ -42,14 +44,25 @@ class LLMAdapter:
         return self._api_key != ""
 
     def ask(self, question):
-        """Send the question to the LLM and return its answer."""
-        response = requests.post(
-            self._url,
-            headers={"Authorization": f"Bearer {self._api_key}"},
-            json={"model": self._model,
-                  "max_tokens": self._max_tokens,
-                  "messages": [{"role": "user", "content": question}]},
-            timeout=8,
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
+        """Send the question to the LLM and return its answer.
+        Raises LLMError when there is no key, no connection, or an answer in an unexpected format."""
+        if not self.has_api_key():
+            raise LLMError("No API key is set.")
+
+        try:
+            response = requests.post(
+                self._url,
+                headers={"Authorization": f"Bearer {self._api_key}"},
+                json={"model": self._model,
+                      "max_tokens": self._max_tokens,
+                      "messages": [{"role": "user", "content": question}]},
+                timeout=8,
+            )
+            response.raise_for_status()
+        except requests.RequestException as error:  # no internet, timeout, or an error status such as 401
+            raise LLMError(f"The LLM could not be reached: {type(error).__name__}.") from error
+
+        try:
+            return response.json()["choices"][0]["message"]["content"].strip()
+        except (ValueError, KeyError, IndexError, TypeError, AttributeError) as error:
+            raise LLMError("The LLM sent an answer in an unexpected format.") from error
