@@ -1,8 +1,6 @@
 # AI-Powered Circular Economy Product Passport
 
-Group 15, Capstone Project, FH Dortmund. A digital passport for electronic products: a unique QR-based identity, a tamper-evident lifecycle history, a circularity score, and AI advice.
-
-Each homework assignment has its own branch. The classes are added there.
+Group 15, Capstone Project, FH Dortmund. This branch contains Homework Assignment 2. The Homework Assignment 1 details and class diagrams are on the `Homeworkassignment001` branch.
 
 ## Team Overview
 
@@ -13,167 +11,151 @@ Each homework assignment has its own branch. The classes are added there.
 | Rajib Munshi       | 3. Circularity score engine              | [subsystem3_score](subsystem3_score/)         |
 | Pradnya Shinde     | 4. AI engine (advice)                    | [subsystem4_ai_engine](subsystem4_ai_engine/) |
 
-## Presentation Link
+## Homework Assignment 2: Stream Processing Pipeline
 
+**5-minute video:** [Link to the video](https://drive.google.com/file/d/1-0lijA2r9SuJ-EVze463hP_Z_T0hzpA9/view?usp=sharing)
+
+The pipeline ingests lifecycle events from across a product's supply chain, one at a time, and does two things:
 **Team video:** [Link to the video](https://drive.google.com/file/d/1gRZJYISrGbB5JZBy0gtX5ykNN33evktm/view?usp=drive_link)
 
-## Run it
+1. **Filter:** drops events that are unverified or out of sequence.
+2. **Transform:** turns the verified events into a dynamic Recyclability Index and the percentage of functional life remaining.
 
-Tested with Python 3.14. Run every command from this folder.
+Run it from the project folder (tested with Python 3.14):
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+python -m stream_core.demo
 ```
 
-To read the description of each subsystem's classes, with their methods, getters and setters (press `q` to close it):
+No API key is needed, because the advice step uses the rule-based advisor.
 
-```bash
-python -m pydoc subsystem1_passport
-python -m pydoc subsystem2_ledger
-python -m pydoc subsystem3_score
-python -m pydoc subsystem4_ai_engine
+### Expected output
+
+The demo sends in 11 events and 6 come out. The 5 dropped events are a forged hash, an event dated too early, a duplicate, a product with no passport, and a product that was never manufactured.
+
+```text
+Events in: 11
+
+manufactured  2020-01-15  Recyclability: 70.0   Life left: 100     Advice: Resale
+sold          2020-02-01  Recyclability: 70.0   Life left: 99.2    Advice: Resale
+used          2021-01-10  Recyclability: 69.0   Life left: 83.5    Advice: Resale
+   Dropped repaired: unverified, hash does not match
+   Dropped repaired: out of sequence
+   Dropped sold: out of sequence
+   Dropped manufactured: product has no passport
+repaired      2023-03-10  Recyclability: 71.0   Life left: 52.5    Advice: Reuse
+refurbished   2024-06-01  Recyclability: 76.0   Life left: 52.0    Advice: Reuse
+recycled      2026-02-20  Recyclability: 76.0   Life left: 0       Advice: None
+   Dropped sold: out of sequence
+
+Events out: 6
 ```
 
-Each folder's `__init__.py` lists its classes, which is why these commands can show them.
+### Where each OOP concept is used
 
-Each subsystem has a demo that creates its objects, uses their getters and setters, and prints the results:
+All of these are in `stream_core/processors.py`.
 
-```bash
-python -m subsystem1_passport.demo
-python -m subsystem2_ledger.demo
-python -m subsystem3_score.demo
-python -m subsystem4_ai_engine.demo
-```
+| Concept                      | Where                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| Abstract base classes        | `StreamProcessor`, `FilterProcessor`, `TransformProcessor`                  |
+| Inheritance and polymorphism | Every step has `process()`, and `Pipeline.process()` calls them the same way |
+| Operator overloading         | `__or__` joins steps: `step_a \| step_b`                                    |
+| Iterators and generators     | `EventStream` has `__iter__` and `__next__`, and `Pipeline.run()` uses `yield` |
 
-The demos need no API key and no extra setup. Each subsystem runs on its own.
+### What each subsystem adds
 
-### Optional: the LLM
+| Subsystem    | File                                    | Steps                                                                              |
+| ------------ | --------------------------------------- | ---------------------------------------------------------------------------------- |
+| 1. Passport  | `subsystem1_passport/stream_steps.py`   | `RegisteredProductFilter`, `PassportHistoryStep`                                   |
+| 2. Ledger    | `subsystem2_ledger/stream_filters.py`   | `VerifiedEventFilter`, `SequenceFilter`                                            |
+| 3. Score     | `subsystem3_score/stream_transforms.py` | `RecyclabilityIndexTransform`, `RemainingLifeTransform`, `RepairabilityTransform`  |
+| 4. AI engine | `subsystem4_ai_engine/stream_advice.py` | `AdviceTransform`                                                                  |
 
-The Subsystem 4 demo works without an API key and uses the rule-based advisor. To use the LLM instead:
+### Formulas
 
-1. Log in at https://chat.kiconnect.nrw, click your name at the bottom left, and create a key under API key management.
-2. Create your own `.env` file in the project folder:
+The numbers below are assumptions and can be changed in `subsystem3_score/stream_transforms.py`.
 
-   ```bash
-   cp .env.example .env               # Windows: copy .env.example .env
-   ```
+- **Recyclability Index** = recyclable share of the materials, then -1 for `used`, +2 for `repaired` and +5 for `refurbished`, kept between 0 and 100.
+- **Remaining life %** = 100 - (years since manufacture / lifespan x 100), then +5 for each `repaired` and +20 for each `refurbished`, kept between 0 and 100. It becomes 0 when the product is `recycled`.
 
-3. Open `.env` and replace `your-key` with your key:
+### Class diagrams
 
-   ```text
-   KICONNECT_API_KEY=your-key
-   ```
+Each diagram reads from top to bottom: the abstract class, then the steps that inherit from it, then the classes those steps use.
 
-4. Run the demo. The last line should say `Answered by: llm`:
-
-   ```bash
-   python -m subsystem4_ai_engine.demo
-   ```
-
-If it says `Answered by: rules`, the demo could not get a usable answer from the LLM, so check your key and internet connection.
-
-Git ignores `.env`, so your key is not committed. Never put a real key in `.env.example`, the README or the code.
-
-## System Design
-
-### Subsystem 1: Passport, QR code and web UI
-
-### Classes: `User`, `Product`, `MaterialComponent`, `Passport`, `QRCode`.
+#### 1. Framework (`stream_core/processors.py`)
 
 ```mermaid
 classDiagram
-    User "1" --> "*" Product : owns
-    Product "1" --> "1" Passport : has
-    Product "1" --> "*" MaterialComponent : made of
-    Passport "1" --> "1" QRCode : has
-    class User {
-        -email
-        -role
-        -password_hash
-        +get_email()
-        +set_email()
-        +get_role()
-        +set_role()
-        +set_password()
-        +check_password()
-        +can_edit()
+    class StreamProcessor {
+        <<abstract>>
+        +process(record)*
+        +#95;#95;or#95;#95;(other)
     }
-    class Product {
-        -uuid
-        -name
-        -model
-        -category
-        -lifespan_years
-        +get_name()
-        +set_name()
-        +add_material()
-        +materials_valid()
-        +validate()
+    class FilterProcessor {
+        <<abstract>>
+        +reason
+        +keep(record)*
+        +process(record)
     }
-    class MaterialComponent {
-        -material
-        -percent
-        -recycled
-        -hazard
-        +get_percent()
-        +set_percent()
-        +to_dict()
+    class TransformProcessor {
+        <<abstract>>
+        +transform(record)*
+        +process(record)
     }
-    class Passport {
-        -public_url
-        +get_public_url()
-        +set_public_url()
-        +export_json()
+    class Pipeline {
+        +steps
+        +#95;#95;or#95;#95;(other)
+        +process(record)
+        +run(stream)
     }
-    class QRCode {
-        -png_bytes
-        -target_url
-        +get_target_url()
-        +set_target_url()
-        +generate()
-        +save()
+    class EventStream {
+        +events
+        +position
+        +#95;#95;iter#95;#95;()
+        +#95;#95;next#95;#95;()
     }
+
+    StreamProcessor <|-- FilterProcessor
+    StreamProcessor <|-- TransformProcessor
+    StreamProcessor <|-- Pipeline
+    StreamProcessor "*" --o Pipeline : steps
+    Pipeline ..> EventStream : reads
 ```
 
-### Subsystem 2: Event Ledger
-
-### Classes: `EventLedger`, `LifecycleEvent`, `EventHasher`, `ChainVerifier`
+#### 2. Filter steps (Subsystems 1 and 2)
 
 ```mermaid
 classDiagram
-
-    class EventLedger {
-        -_events: dict
-        -_genesis_hash: str
-        -_score_engine_callback
-        -_event_hasher: EventHasher
-        +add_event(product, actor, event_type, details)
-        +get_history(product_uuid)
-        +get_events()
-        +get_genesis_hash()
+    class FilterProcessor {
+        <<abstract>>
+        +reason
+        +keep(record)*
+        +process(record)
     }
-
-    class LifecycleEvent {
-        -_product_uuid
-        -_event_type
-        -_timestamp
-        -_actor_email
-        -_details
-        -_previous_hash
-        -_event_hash
-        +get_event_data()
-        +get_event_hash()
-        +get_previous_hash()
+    class RegisteredProductFilter {
+        +passports
+        +keep(record)
     }
-
+    class VerifiedEventFilter {
+        +hasher
+        +keep(record)
+    }
+    class SequenceFilter {
+        +last_records
+        +keep(record)
+    }
     class EventHasher {
-        -_algorithm: str
         +calculate_hash(event)
         +verify_hash(event)
     }
 
+    FilterProcessor <|-- RegisteredProductFilter
+    FilterProcessor <|-- VerifiedEventFilter
+    FilterProcessor <|-- SequenceFilter
+    VerifiedEventFilter --> EventHasher : uses
     class ChainVerifier {
         -_genesis_hash: str
         -_result: dict
@@ -189,131 +171,63 @@ classDiagram
     ChainVerifier  ..>  LifecycleEvent : verifies
 ```
 
-### Subsystem 3: Circularity score engine
-### Classes: ScoreCalculator, ScoreWeights, CircularityScore, Subscore and Grade
+#### 3. Score transform steps (Subsystem 3)
 
 ```mermaid
 classDiagram
-    class ScoreCalculator {
-        -config
-        -weights
-        -grades
-        -params
-        +__init__(config)
-        +from_config_file(path)
-        +calculate(product)
-        +recalculate_all(db_path, trigger, only_if_changed)
-        +describe()
+    class TransformProcessor {
+        <<abstract>>
+        +transform(record)*
+        +process(record)
+    }
+    class RecyclabilityIndexTransform {
+        +products
+        +indexes
+        +starting_index(product)
+        +transform(record)
+    }
+    class RemainingLifeTransform {
+        +products
+        +start_dates
+        +bonuses
+        +transform(record)
+    }
+    class RepairabilityTransform {
+        +repairs
+        +transform(record)
     }
 
-    class ScoreWeights {
-        +recycled_content
-        +repairability
-        +lifespan
-        +recyclability
-        +hazard_free
-        +__post_init__()
-        +from_dict(d)
-        +as_dict()
-    }
-
-    class CircularityScore {
-        +product_id
-        +total
-        +grade
-        +sub_scores
-        +incomplete
-        +missing_fields
-        +computed_at
-        +calc_ms
-        +grade_letter()
-        +sub_score(name)
-        +breakdown()
-        +to_record(trigger)
-    }
-
-    class SubScore {
-        +name
-        +value
-        +weight
-        +label()
-        +points()
-    }
-
-    class Grade {
-        +letter
-        +min_score
-    }
-
-
-    ScoreCalculator ..> ScoreWeights : uses
-    ScoreCalculator ..> CircularityScore : creates
-    CircularityScore "1" *-- "1..*" SubScore : contains
-    CircularityScore ..> Grade : assigned grade
-    
+    TransformProcessor <|-- RecyclabilityIndexTransform
+    TransformProcessor <|-- RemainingLifeTransform
+    TransformProcessor <|-- RepairabilityTransform
 ```
 
-
-### Subsystem 4: AI engine
-
-### Classes: `Recommender`, `LLMAdapter`, `RuleBasedAdvisor`, `AIPrediction`
+#### 4. Advice and passport transform steps (Subsystems 4 and 1)
 
 ```mermaid
 classDiagram
-    Recommender ..> AIPrediction : creates
-    Recommender "1" --> "0..1" LLMAdapter : asks first
-    Recommender "1" --> "1" RuleBasedAdvisor : falls back to
-    class AIPrediction {
-        -action
-        -reason
-        -source
-        -created_at
-        +initialize()
-        +get_action()
-        +set_action()
-        +get_reason()
-        +set_reason()
-        +get_source()
-        +set_source()
-        +get_created_at()
-        +set_created_at()
+    class TransformProcessor {
+        <<abstract>>
+        +transform(record)*
+        +process(record)
+    }
+    class AdviceTransform {
+        +recommender
+        +transform(record)
+    }
+    class PassportHistoryStep {
+        +passports
+        +transform(record)
     }
     class Recommender {
-        -adapter
-        -advisor
-        +initialize()
-        +get_adapter()
-        +set_adapter()
-        +get_advisor()
-        +set_advisor()
         +recommend(product)
     }
-    class RuleBasedAdvisor {
-        -resale_minimum
-        -repair_minimum
-        -actions
-        +initialize()
-        +get_resale_minimum()
-        +set_resale_minimum()
-        +get_repair_minimum()
-        +set_repair_minimum()
-        +get_actions()
-        +set_actions()
-        +advise(product)
+    class Passport {
+        +add_history_event(description)
     }
-    class LLMAdapter {
-        -url
-        -model
-        -max_tokens
-        -api_key
-        +initialize()
-        +get_url()
-        +set_url()
-        +get_model()
-        +set_model()
-        +get_max_tokens()
-        +set_max_tokens()
-        +has_api_key()
-        +ask(question)
-    }
+
+    TransformProcessor <|-- AdviceTransform
+    TransformProcessor <|-- PassportHistoryStep
+    AdviceTransform --> Recommender : uses
+    PassportHistoryStep --> Passport : updates
 ```
