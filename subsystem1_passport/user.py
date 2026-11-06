@@ -6,7 +6,7 @@ import re
 
 
 class User:
-    ROLES = ("admin", "manufacturer", "recycler", "consumer")  # four roles (FR 8)
+    ROLES = ("admin", "manufacturer", "recycler", "consumer")  
     _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
     def __init__(self, email, role="consumer", password=None):
@@ -57,6 +57,16 @@ class User:
         salt = os.urandom(16)
         digest = hashlib.pbkdf2_hmac("sha256", plain_password.encode(), salt, 200_000)
         self._password_hash = salt.hex() + "$" + digest.hex()
+
+    def set_password_hash(self, password_hash):
+        """Restores a hash made by set_password, for a user loaded from the database."""
+        salt_hex, _, digest_hex = str(password_hash).partition("$")
+        try:
+            if len(bytes.fromhex(salt_hex)) != 16 or len(bytes.fromhex(digest_hex)) != 32:
+                raise ValueError
+        except ValueError:
+            raise ValueError("Not a password hash made by set_password.") from None
+        self._password_hash = password_hash
 
     # ---- behaviour ----
     def check_password(self, plain_password):
