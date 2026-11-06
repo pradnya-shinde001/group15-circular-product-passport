@@ -8,6 +8,7 @@ from .passport_repository import ProductRepository, UserRepository
 from .product import Product
 from .qr_code import QRCode
 from .user import User
+from .errors import ProductNotFoundError, RegistrationError
 
 CONDITIONS = ["Excellent", "Good", "Fair", "Poor"]
 REGISTER_ROLES = ("admin", "manufacturer")
@@ -53,7 +54,7 @@ class PassportService:
         except ValueError as e:
             problems.append(str(e))
         if problems:
-            raise ValueError(problems)
+              raise RegistrationError(problems)
         self._products.add(product, saved, passport.get_public_url(), owner_id, spare_parts_percent, condition)
         if self._on_registered is not None:
             self._on_registered(product.get_uuid())
@@ -63,7 +64,7 @@ class PassportService:
         """The product, or LookupError when there is none."""
         product = self._products.get(uuid)
         if product is None:
-            raise LookupError(f"No product with the UUID {uuid}.")
+                        raise ProductNotFoundError(f"No product with the UUID {uuid}.")
         return product
 
     def materials(self, uuid):

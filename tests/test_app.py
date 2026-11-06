@@ -242,11 +242,22 @@ def test_adding_an_event_needs_a_login(browser, product_uuid):
 
 
 def test_consumer_can_record_used(browser, product_uuid):
+    log_in(browser, "manufacturer")
+    for event_type in ("manufactured", "sold"):
+        response = browser.post(f"/passport/{product_uuid}/events", data={"event_type": event_type})
+        assert response.status_code == 303
+    browser.post("/logout")
+
     sign_up(browser, "consumer")
     response = browser.post(f"/passport/{product_uuid}/events", data={"event_type": "used", "note": "Daily"})
     assert response.status_code == 303
     assert "Daily" in browser.get(f"/passport/{product_uuid}").text
 
+
+def test_new_product_cannot_be_used_before_it_is_sold(browser, product_uuid):
+    sign_up(browser, "consumer")
+    response = browser.post(f"/passport/{product_uuid}/events", data={"event_type": "used"})
+    assert response.status_code == 400
 
 def test_recycler_cannot_record_manufactured(browser, product_uuid):
     sign_up(browser, "recycler")
