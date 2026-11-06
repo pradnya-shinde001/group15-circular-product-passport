@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 
 from database import table_names, table_rows
 from database.seed import ensure_demo_data
-from subsystem1_passport.auth_service import AuthService
+from subsystem1_passport.auth_service import SIGNUP_ROLES, AuthService
 from subsystem1_passport.passport_service import CONDITIONS, REGISTER_ROLES, PassportService
 from subsystem2_ledger.ledger_service import EVENT_PERMISSIONS, LedgerService
 from subsystem3_score.score_service import ScoreService
@@ -51,13 +51,23 @@ def get_user(request):
 
 def show(request, template, data, status_code=200):
     """Show an HTML page. Every page also gets the logged-in user, for the menu."""
-    data["user"] = get_user(request)
+    user = get_user(request)
+    data["user"] = user
+    data["can_register"] = user is not None and user["role"] in REGISTER_ROLES
     return templates.TemplateResponse(request, template, data, status_code=status_code)
 
 
 def go_to(url):
     """Send the browser to another page."""
     return RedirectResponse(url, status_code=303)
+
+def logged_in_response(token, next):
+    """Set the login cookie and go to `next`, but only to a page of this app, never another website."""
+    if not next.startswith("/") or next.startswith("//"):
+        next = "/"
+    response = go_to(next)
+    response.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax")
+    return response
 
 
 def to_number(text, label, errors):
@@ -80,6 +90,8 @@ def not_found(request: Request, error: LookupError):
 
 # ---------- 3. Login and logout ----------
 
+# ---------- 3. Login and logout ----------
+
 @app.get("/login")
 def login_page(request: Request, next: str = "/"):
     return show(request, "login.html", {"next": next, "email": ""})
@@ -92,13 +104,25 @@ def login(request: Request, email: str = Form(""), password: str = Form(""), nex
     except ValueError as error:
         data = {"next": next, "email": email, "errors": [str(error)]}
         return show(request, "login.html", data, 401)
+    return logged_in_response(token, next)
 
-    # Only go back to a page of this app, never to another website.
-    if not next.startswith("/") or next.startswith("//"):
-        next = "/"
-    response = go_to(next)
-    response.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax")
-    return response
+
+@app.get("/signup")
+def signup_page(request: Request, next: str = "/"):
+    if get_user(request) is not None:
+        return go_to("/")
+    return show(request, "signup.html", {"next": next, "email": "", "role": "consumer", "roles": SIGNUP_ROLES})
+
+
+@app.post("/signup")
+def signup(request: Request, email: str = Form(""), password: str = Form(""),
+           role: str = Form("consumer"), next: str = Form("/")):
+    try:
+        user, token = auth.sign_up(email, password, role)
+    except ValueError as error:
+        data = {"next": next, "email": email, "role": role, "roles": SIGNUP_ROLES, "errors": [str(error)]}
+        return show(request, "signup.html", data, 400)
+    return logged_in_response(token, next)
 
 
 @app.post("/logout")
@@ -109,7 +133,14 @@ def logout(request: Request):
     return response
 
 
+
 # ---------- 4. Search page ----------
+@app.post("/logout")
+def logout(request: Request):
+    auth.logout(request.cookies.get(SESSION_COOKIE))
+    response = go_to("/")
+    response.delete_cookie(SESSION_COOKIE)
+    return response
 
 @app.get("/")
 def home(request: Request, q: str = ""):

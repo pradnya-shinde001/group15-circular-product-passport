@@ -246,7 +246,9 @@
     <header>
       <nav>
         <a class="brand" href="/">♻️ Product Passport</a>
-        <a href="/register">Register</a>
+        {% if can_register %}
+        <a href="/register">Register product</a>
+        {% endif %}
         <!-- <a href="/database">Database</a> -->
         <a href="/docs">API</a>
         {% if user %}
@@ -255,6 +257,7 @@
           <button class="small">Log out</button>
         </form>
         {% else %}
+        <a href="/signup">Sign up</a>
         <a href="/login">Log in</a>
         {% endif %}
       </nav>

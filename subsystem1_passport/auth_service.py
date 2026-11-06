@@ -1,12 +1,15 @@
 """AuthService: Subsystem 1's login. Reading passports is public; changing anything needs a login (FR 8)."""
 import hashlib
 import secrets
+import sqlite3
 from datetime import datetime, timedelta, timezone
 
 from .auth_repository import AuthRepository
+from .passport_repository import UserRepository
 from .user import User
 
 SESSION_HOURS = 8
+SIGNUP_ROLES = ("consumer", "manufacturer", "recycler") 
 
 
 def _hash(token):
@@ -20,6 +23,19 @@ def _now():
 class AuthService:
     def __init__(self):
         self._repository = AuthRepository()
+        self._users = UserRepository()
+
+    def sign_up(self, email, password, role):
+        """Create an account and log it in. Returns (user dict, session token).
+        Raises ValueError for a bad email, password or role, or an email already in use."""
+        if role not in SIGNUP_ROLES:
+            raise ValueError("Choose consumer, manufacturer or recycler.")
+        user = User((email or "").strip(), role, password or "")  # the User class checks the data
+        try:
+            self._users.add(user)
+        except sqlite3.IntegrityError:
+            raise ValueError("An account with this email already exists.") from None
+        return self.login(user.get_email(), password)
 
     def login(self, email, password):
         """Check the password with the User class. Returns (user dict, session token).

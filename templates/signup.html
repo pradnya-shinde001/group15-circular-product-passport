@@ -1,0 +1,43 @@
+{% extends "base.html" %} {% block title %}Sign up{% endblock %} {% block
+content %}
+<h1>Sign up</h1>
+<p class="muted">
+  Create an account. Consumers and recyclers record lifecycle events.
+  Manufacturers can also register products.
+</p>
+<form method="post" action="/signup" class="card" style="max-width: 420px">
+  <input type="hidden" name="next" value="{{ next }}" />
+  <label for="email">Email</label>
+  <input
+    id="email"
+    name="email"
+    type="email"
+    value="{{ email }}"
+    autocomplete="username"
+    required
+    autofocus
+  />
+  <label for="password">Password (at least 8 characters)</label>
+  <input
+    id="password"
+    name="password"
+    type="password"
+    minlength="8"
+    autocomplete="new-password"
+    required
+  />
+  <label for="role">Role</label>
+  <select id="role" name="role">
+    {% for option in roles %} {% if option == role %}
+    <option value="{{ option }}" selected>{{ option | capitalize }}</option>
+    {% else %}
+    <option value="{{ option }}">{{ option | capitalize }}</option>
+    {% endif %} {% endfor %}
+  </select>
+  <div class="actions"><button>Sign up</button></div>
+  <p class="muted">
+    Already have an account?
+    <a href="/login?next={{ next | urlencode }}">Log in</a>
+  </p>
+</form>
+{% endblock %}
