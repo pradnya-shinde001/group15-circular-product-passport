@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Product Passport{% endblock %}</title>
+    <style>
+      :root {
+        --ink: #17231f;
+        --muted: #5b6660;
+        --line: #e0ddd4;
+        --bg: #f6f4ef;
+        --card: #fff;
+        --green: #1f7a5c;
+        --bar: #e8e5dc;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font:
+          16px/1.45 system-ui,
+          sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+      }
+      header {
+        background: #14241f;
+        color: #fff;
+        padding: 10px 16px;
+      }
+      nav {
+        max-width: 960px;
+        margin: auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        align-items: center;
+      }
+      nav a {
+        color: #fff;
+        text-decoration: none;
+      }
+      nav .brand {
+        font-weight: 700;
+        margin-right: auto;
+      }
+      main {
+        max-width: 960px;
+        margin: auto;
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.45rem;
+        margin: 0 0 4px;
+        overflow-wrap: anywhere;
+      }
+      h2 {
+        font-size: 1.05rem;
+        margin: 24px 0 8px;
+      }
+      a {
+        color: #14663f;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.9rem;
+        overflow-wrap: anywhere;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 14px;
+        margin-top: 12px;
+      }
+      .score {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .grade {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #fff;
+        background: var(--green);
+        border-radius: 10px;
+        width: 58px;
+        height: 58px;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .grade.small {
+        font-size: 1rem;
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        display: inline-grid;
+      }
+      .bar {
+        height: 8px;
+        background: var(--bar);
+        border-radius: 4px;
+      }
+      .bar i {
+        display: block;
+        height: 8px;
+        background: var(--green);
+        border-radius: 4px;
+      }
+      .row {
+        margin: 10px 0;
+      }
+      .row > div:first-child {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .ok {
+        color: #14663f;
+        font-weight: 600;
+      }
+      .bad {
+        color: #a12a1f;
+        font-weight: 600;
+      }
+      .scroll {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+      }
+      td,
+      th {
+        text-align: left;
+        padding: 6px 4px;
+        border-bottom: 1px solid #eee;
+        vertical-align: top;
+      }
+      td.hash {
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+        max-width: 180px;
+        overflow-wrap: anywhere;
+      }
+      label {
+        display: block;
+        margin: 10px 0 3px;
+        font-weight: 600;
+        font-size: 0.92rem;
+      }
+      input,
+      select {
+        font: inherit;
+        padding: 8px;
+        border: 1px solid #bdb9ad;
+        border-radius: 7px;
+        width: 100%;
+        background: #fff;
+      }
+      input[type="checkbox"] {
+        width: auto;
+      }
+      table input {
+        padding: 5px;
+        min-width: 64px;
+      }
+      table input[type="checkbox"] {
+        min-width: 0;
+      }
+      button,
+      .button {
+        font: inherit;
+        padding: 8px 14px;
+        border: 0;
+        border-radius: 7px;
+        background: var(--green);
+        color: #fff;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0 16px;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+        align-items: end;
+      }
+      .actions form {
+        margin: 0;
+      }
+      .notice {
+        padding: 10px 12px;
+        border-radius: 8px;
+        margin: 10px 0;
+        background: #e0f3e8;
+        color: #14663f;
+      }
+      .notice.error {
+        background: #fbe4e1;
+        color: #8c2015;
+      }
+      .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .tabs a {
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: #e8e5dc;
+        text-decoration: none;
+        color: var(--ink);
+      }
+      .tabs a.on {
+        background: var(--green);
+        color: #fff;
+      }
+      img.qr {
+        width: 150px;
+        height: 150px;
+      }
+      .who {
+        color: #cfe3da;
+        font-size: 0.9rem;
+      }
+      button.small {
+        padding: 3px 10px;
+        font-size: 0.9rem;
+        background: #e8e5dc;
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a class="brand" href="/">♻️ Product Passport</a>
+        <a href="/register">Register</a>
+        <!-- <a href="/database">Database</a> -->
+        <a href="/docs">API</a>
+        {% if user %}
+        <span class="who">{{ user.email }} ({{ user.role }})</span>
+        <form method="post" action="/logout" style="margin: 0">
+          <button class="small">Log out</button>
+        </form>
+        {% else %}
+        <a href="/login">Log in</a>
+        {% endif %}
+      </nav>
+    </header>
+    <main>
+      {% if message %}
+      <div class="notice">{{ message }}</div>
+      {% endif %} {% for problem in errors or [] %}
+      <div class="notice error">{{ problem }}</div>
+      {% endfor %} {% block content %}{% endblock %}
+      <p class="muted">
+        Group 15 student prototype, Homework Assignment 3. The demo data is
+        synthetic.
+      </p>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Database{% endblock %}
+{% block content %}
+<h1>Database</h1>
+<p class="muted">Every table in the shared SQLite database (database/passport.db), read live.</p>
+<nav class="tabs" aria-label="Tables">
+  {% for t in tables %}<a href="/database?table={{ t }}" class="{{ 'on' if t == table else '' }}">{{ t }}</a>{% endfor %}
+</nav>
+<div class="card scroll">
+  <p><strong>{{ table }}</strong>: {{ rows|length }} row(s)</p>
+  <table>
+    <tr>{% for c in columns %}<th>{{ c }}</th>{% endfor %}</tr>
+    {% for row in rows %}
+    <tr>{% for value in row %}
+      <td class="{{ 'hash' if value is string and value|length > 40 else '' }}">{{ value if value is not none else "" }}</td>
+    {% endfor %}</tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
