@@ -1,6 +1,5 @@
 """Recommender: asks the LLM first and uses the rules if the LLM cannot answer."""
 from .ai_prediction import AIPrediction
-from .errors import LLMError
 from .rule_based_advisor import RuleBasedAdvisor
 
 
@@ -44,7 +43,7 @@ class Recommender:
         question = f"Choose one action for this product: {actions}. Reply with one word only. Product: {product}"
         try:
             answer = self._adapter.ask(question)
-        except LLMError:
-            return None  # the LLM could not answer, so the rules will
+        except Exception:
+            return None
 
         return answer if answer in actions else None
