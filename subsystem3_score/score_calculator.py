@@ -2,6 +2,7 @@
 import math
 
 from .circularity_score import CircularityScore
+from .errors import ProductNotFoundError
 from .score_weights import ScoreWeights
 from .sub_score import SubScore
 
@@ -90,7 +91,7 @@ class ScoreCalculator:
     def recalculate(self, product_id):
         """Calculate a product's score from its stored data and add it to the history."""
         if product_id not in self._products:
-            raise ValueError(f"No product with the ID {product_id}.")
+            raise ProductNotFoundError(f"No product with the ID {product_id}.")
         product, materials = self._products[product_id]
         score = self.calculate(product, materials)
         self._history.setdefault(product_id, []).append(score)
@@ -104,6 +105,8 @@ class ScoreCalculator:
 
     def on_event(self, event):
         """The ledger calls this after every new event."""
+        if event.product_id not in self._products:
+            raise ProductNotFoundError(f"No product with the ID {event.product_id}.")
         if event.event_type == "repaired" and event.corrects_event_id is None:
             self._products[event.product_id][0]["repair_count"] += 1
         self.recalculate(event.product_id)
