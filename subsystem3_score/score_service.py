@@ -1,5 +1,6 @@
 """ScoreService: Subsystem 3's work on the shared database.
 Calculates a product's circularity score with ScoreCalculator and stores it."""
+from .errors import ProductNotFoundError
 from .score_calculator import ScoreCalculator
 from .score_repository import ScoreRepository
 
@@ -13,7 +14,7 @@ class ScoreService:
         """Calculate the score from the stored data, save it and return the CircularityScore."""
         data = self._repository.product_data(product_uuid)
         if data is None:
-            raise LookupError(f"No product with the UUID {product_uuid}.")
+            raise ProductNotFoundError(f"No product with the UUID {product_uuid}.")
         product, materials = data
         score = self._calculator.calculate(product, materials)
         self._repository.add(score, reason)

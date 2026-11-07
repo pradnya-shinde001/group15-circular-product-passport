@@ -2,6 +2,8 @@
 import json
 from pathlib import Path
 
+from .errors import InvalidConfigError
+
 CONFIG_PATH = Path(__file__).parent / "score_config.json"
 NAMES = ("recycled_content", "repairability", "lifespan", "recyclability", "hazard")
 FORMULA = {
@@ -19,7 +21,7 @@ class ScoreWeights:
         self.initialize()
 
     def initialize(self):
-        """Read the config file. Raises ValueError unless the five weights sum to 1.0."""
+        """Read the config file. Raises InvalidConfigError unless the five weights sum to 1.0."""
         with open(self._config_path) as file:
             config = json.load(file)
         self.weights = config["weights"]
@@ -40,9 +42,9 @@ class ScoreWeights:
     @weights.setter
     def weights(self, value):
         if set(value) != set(NAMES):
-            raise ValueError(f"The weights must be exactly: {', '.join(NAMES)}.")
+            raise InvalidConfigError(f"The weights must be exactly: {', '.join(NAMES)}.")
         if abs(sum(value.values()) - 1.0) > 1e-9:
-            raise ValueError(f"The weights must sum to 1.0, but they sum to {sum(value.values()):g}.")
+            raise InvalidConfigError(f"The weights must sum to 1.0, but they sum to {sum(value.values()):g}.")
         self._weights = dict(value)
 
     @property
@@ -52,7 +54,7 @@ class ScoreWeights:
     @category_lifespans.setter
     def category_lifespans(self, value):
         if "Other" not in value or any(years <= 0 for years in value.values()):
-            raise ValueError("Lifespans must be positive and include 'Other'.")
+            raise InvalidConfigError("Lifespans must be positive and include 'Other'.")
         self._category_lifespans = dict(value)
 
     def lifespan_for(self, category):
