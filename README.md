@@ -14,7 +14,7 @@ A digital passport for electronic products: a unique identity and QR code, a tam
 | Rajib Munshi       | 3. Circularity score engine              | [subsystem3_score](subsystem3_score/)         |
 | Pradnya Shinde     | 4. AI engine (advice)                    | [subsystem4_ai_engine](subsystem4_ai_engine/) |
 
-**Video:** the link will be added here.
+**Video:** [Link to the video](https://drive.google.com/file/d/1qJZl2XPRlmK0XXQ83RYhAs0DgxtIqW0j/view?usp=drive_link)
 
 ## What we built
 
