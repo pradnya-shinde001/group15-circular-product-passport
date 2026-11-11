@@ -80,6 +80,20 @@ CREATE TABLE IF NOT EXISTS ai_predictions (
     product_uuid TEXT NOT NULL REFERENCES products (uuid),
     action       TEXT NOT NULL,
     reason       TEXT NOT NULL,
-    source       TEXT NOT NULL,               -- "llm" or "rules"
+    source       TEXT NOT NULL,
+    model        TEXT NOT NULL DEFAULT '',
+    rating       INTEGER CHECK (rating BETWEEN 1 AND 5),
     created_at   TEXT NOT NULL
+);
+
+-- Every photo identification, with the model that made it (Subsystem 4, NFR 9).
+-- Only the result is kept: the photo itself is deleted right after (NFR 6).
+CREATE TABLE IF NOT EXISTS photo_identifications (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    category            TEXT NOT NULL,
+    category_confidence REAL NOT NULL,
+    material            TEXT NOT NULL,
+    material_confidence REAL NOT NULL,
+    model               TEXT NOT NULL,
+    created_at          TEXT NOT NULL
 );

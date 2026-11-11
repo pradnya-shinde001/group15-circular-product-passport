@@ -5,9 +5,12 @@ Run from the project folder:  uvicorn app:app --reload
 Then open:  http://localhost:8000        (web pages)
             http://localhost:8000/docs   (API documentation)"""
 import os
+import tempfile
+import threading
+import os
 from pathlib import Path
 
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
@@ -23,6 +26,8 @@ from subsystem2_ledger.errors import LedgerError
 from subsystem2_ledger.ledger_service import EVENT_PERMISSIONS, LedgerService
 from subsystem3_score.score_service import ScoreService
 from subsystem3_score.score_weights import ScoreWeights
+from subsystem4_ai_engine.errors import InvalidPhotoError, InvalidRatingError
+from subsystem4_ai_engine.image_classifier import RECYCLABLE_MATERIALS
 from subsystem4_ai_engine.recommendation_service import RecommendationService
 
 # ---------- 1. Setup ----------
@@ -41,6 +46,19 @@ auth = AuthService()
 
 # Create the tables, and add the demo data when the database is still empty.
 ensure_demo_data()
+
+
+def preload_clip():
+    """Load the CLIP model now, so the first uploaded photo does not wait for it (Subsystem 4, NFR 2)."""
+    try:
+        advice.get_classifier().load()
+    except ImportError:
+        print("CLIP is not loaded: install torch and transformers to identify photos.")
+
+
+# A background thread, so the pages work at once while CLIP loads. The tests set PRELOAD_CLIP=0.
+if os.environ.get("PRELOAD_CLIP", "1") == "1":
+    threading.Thread(target=preload_clip, daemon=True).start()
 
 app = FastAPI(title="Circular Product Passport")
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
@@ -210,6 +228,43 @@ async def register(request: Request):
     return show(request, "register.html", register_form_data(form, errors), 400)
 
 
+@app.post("/register/photo")
+async def register_from_photo(request: Request, photo: UploadFile = File(...)):
+    """Subsystem 4: guess the category and the main material from a photo, and pre-fill the form."""
+    user = get_user(request)
+    if user is None:
+        return go_to("/login?next=/register")
+    if user["role"] not in REGISTER_ROLES:
+        return not_allowed_page(request, user)
+
+    # Save the upload to a temporary file. identify_photo() checks it and deletes it afterwards.
+    suffix = Path(photo.filename or "").suffix
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temp_file:
+        temp_file.write(await photo.read())
+
+    try:
+        result = advice.identify_photo(temp_file.name)
+    except InvalidPhotoError as error:
+        return show(request, "register.html", register_form_data({}, [str(error)]), 400)
+
+    # Only a guess that is not uncertain goes into the form; the user can still change it.
+    form = {}
+    best_category = result["categories"][0]
+    best_material = result["materials"][0]
+    if not best_category["uncertain"]:
+        form["category"] = best_category["label"]
+        form["lifespan_years"] = ScoreWeights().category_lifespans.get(best_category["label"], "")
+    if not best_material["uncertain"]:
+        form["material_0"] = best_material["label"]
+        if best_material["label"] in RECYCLABLE_MATERIALS:
+            form["recyclable_0"] = "on"  # tick "Recyclable", so the score does not miss it
+
+    data = register_form_data(form, [])
+    data["photo_result"] = result
+    data["matches"] = passports.search(best_category["label"])[:5]  # existing passports of the same kind
+    return show(request, "register.html", data)
+
+
 # ---------- 6. Passport page ----------
 
 def passport_page_data(uuid, message, errors):
@@ -300,6 +355,15 @@ def ask_for_advice(request: Request, uuid: str):
         return go_to(f"/login?next=/passport/{uuid}")
     prediction = advice.recommend(uuid)
     return go_to(f"/passport/{uuid}?msg=Recommendation:+{prediction.get_action()}#advice")
+
+
+@app.post("/passport/{uuid}/advice/{prediction_id}/rate")
+def rate_advice(request: Request, uuid: str, prediction_id: int, rating: int = Form(...)):
+    try:
+        advice.rate(prediction_id, rating)
+    except InvalidRatingError as error:
+        return show(request, "passport.html", passport_page_data(uuid, "", [str(error)]), 400)
+    return go_to(f"/passport/{uuid}?msg=Thank+you+for+your+rating#advice")
 
 
 # ---------- 7. Database page: every table, read live (admin only) ----------

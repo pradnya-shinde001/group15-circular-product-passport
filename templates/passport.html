@@ -194,8 +194,18 @@ endblock %} {% block content %}
   {% if predictions %} {% set p = predictions[0] %}
   <p>
     <strong>{{ p.action }}</strong>: {{ p.reason }}
-    <span class="muted">(answered by {{ p.source }}, {{ p.created_at }})</span>
+    <span class="muted">(answered by {{ p.source }}, model {{ p.model or "unknown" }}, {{ p.created_at }})</span>
   </p>
+  <form method="post" action="/passport/{{ product.uuid }}/advice/{{ p.id }}/rate">
+    <label for="rating">How useful is this recommendation?</label>
+    <div class="actions" style="margin-top: 4px; align-items: center">
+      <select id="rating" name="rating" style="width: auto">
+        {% for r in [5, 4, 3, 2, 1] %}<option value="{{ r }}" {% if p.rating == r %}selected{% endif %}>{{ r }}{% if r == 5 %} (very useful){% elif r == 1 %} (not useful){% endif %}</option>{% endfor %}
+      </select>
+      <button>Rate</button>
+      {% if p.rating %}<span class="muted">Your rating: {{ p.rating }} / 5</span>{% endif %}
+    </div>
+  </form>
   {% if predictions|length > 1 %}
   <p class="muted">
     {{ predictions|length - 1 }} earlier recommendation(s) are stored in the
@@ -204,7 +214,7 @@ endblock %} {% block content %}
   {% endif %} {% else %}
   <p>No recommendation yet.</p>
   {% endif %} {% if user %}
-  <form method="post" action="/passport/{{ product.uuid }}/advice">
+  <form method="post" action="/passport/{{ product.uuid }}/advice" style="margin-top: 20px">
     <button>Get a new recommendation</button>
   </form>
   {% else %}

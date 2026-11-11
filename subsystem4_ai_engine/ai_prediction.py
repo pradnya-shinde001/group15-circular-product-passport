@@ -1,12 +1,16 @@
 """AIPrediction: one recommendation made by the AI engine."""
 from datetime import datetime
 
+from .errors import InvalidRatingError
+
 
 class AIPrediction:
-    def __init__(self, action, reason, source):
+    def __init__(self, action, reason, source, model="", rating=None):
         self._action = action
         self._reason = reason
         self._source = source
+        self._model = model      # which model answered, with its version, e.g. "GPT-OSS-120B"
+        self._rating = rating    # the user's rating, 1 to 5, or None before anyone rates it
         self._created_at = None
         self.initialize()
 
@@ -31,6 +35,21 @@ class AIPrediction:
 
     def set_source(self, source):
         self._source = source
+
+    def get_model(self):
+        return self._model
+
+    def set_model(self, model):
+        self._model = model
+
+    def get_rating(self):
+        return self._rating
+
+    def rate(self, rating):
+        """Save the user's rating. It must be a whole number from 1 to 5."""
+        if type(rating) is not int or rating < 1 or rating > 5:
+            raise InvalidRatingError("A rating must be a whole number from 1 to 5.")
+        self._rating = rating
 
     def get_created_at(self):
         return self._created_at
