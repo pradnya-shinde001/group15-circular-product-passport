@@ -13,12 +13,16 @@ from fastapi.templating import Jinja2Templates
 from database import table_names, table_rows
 from database.seed import ensure_demo_data
 from subsystem1_passport.auth_service import SIGNUP_ROLES, AuthService
-from subsystem1_passport.passport_service import CONDITIONS, REGISTER_ROLES, PassportService
+from subsystem1_passport.passport_service import (
+    CONDITIONS,
+    REGISTER_ROLES,
+    PassportService,
+)
+from subsystem2_ledger.errors import LedgerError
 from subsystem2_ledger.ledger_service import EVENT_PERMISSIONS, LedgerService
 from subsystem3_score.score_service import ScoreService
 from subsystem3_score.score_weights import ScoreWeights
 from subsystem4_ai_engine.recommendation_service import RecommendationService
-
 
 # ---------- 1. Setup ----------
 
@@ -226,8 +230,9 @@ def passport_page_data(uuid, message, errors):
         "materials": passports.materials(uuid),
         "events": events,                              # Subsystem 2
         "repairs": repairs,
-        "chain": ledger.verify(uuid),
+        "chain": ledger.verify(uuid),                  # Subsystem 2
         "permissions": EVENT_PERMISSIONS,
+        "next_events": ledger.next_events(uuid),       # Subsystem 2
         "score": scores.latest(uuid),                  # Subsystem 3
         "score_history": scores.history(uuid),
         "predictions": advice.history(uuid),           # Subsystem 4
@@ -255,10 +260,9 @@ def add_event(request: Request, uuid: str, event_type: str = Form(...), note: st
 
     try:
         ledger.add_event(uuid, user["id"], event_type, note)  # recorded by the logged-in user
-    except PermissionError as error:
-        return show(request, "passport.html", passport_page_data(uuid, "", [str(error)]), 403)
-    except ValueError as error:
-        return show(request, "passport.html", passport_page_data(uuid, "", error.args[0]), 400)
+    except LedgerError as error:  # 400, 403, 404, 409 or 500, each error brings its own status code
+        errors = error.message if isinstance(error.message, list) else [str(error)]
+        return show(request, "passport.html", passport_page_data(uuid, "", errors), error.status_code)
 
     return go_to(f"/passport/{uuid}?msg=Event+added#history")
 
@@ -315,6 +319,12 @@ def api_passport(uuid: str):
     passport["chain"] = ledger.verify(uuid)
     passport["recommendations"] = advice.history(uuid)
     return passport
+
+@app.get("/api/passports/{uuid}/events")
+def api_events(uuid: str):
+    """The event history of this product, oldest first."""
+    passports.get_product(uuid)  # 404 for an unknown product
+    return ledger.history(uuid)
 
 
 @app.get("/api/passports/{uuid}/verify")

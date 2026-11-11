@@ -1,5 +1,6 @@
 """LedgerService: Subsystem 2's work on the shared database.
 Adds lifecycle events to a product's hash chain and verifies the chain."""
+import logging
 import sqlite3
 from datetime import datetime
 
@@ -19,6 +20,18 @@ from .lifecycle_event import LifecycleEvent
 
 EVENT_PERMISSIONS = EventLedger.EVENT_PERMISSIONS
 
+# Order of events: each event type can only follow certain previous event types. The first event must be "manufactured".
+NEXT_EVENTS = {
+    None: ["manufactured"],
+    "manufactured": ["sold"],
+    "sold": ["used", "repaired", "refurbished", "recycled"],
+    "used": ["sold", "repaired", "refurbished", "recycled"],
+    "repaired": ["used", "sold", "repaired", "refurbished", "recycled"],
+    "refurbished": ["sold", "used", "repaired", "recycled"],
+    "recycled": [],
+}
+
+logger = logging.getLogger(__name__)
 
 class LedgerService:
     def __init__(self, on_event=None):
@@ -61,22 +74,32 @@ class LedgerService:
         except sqlite3.Error as e:
             raise LedgerDatabaseError(f"The database failed: {e}") from e
         if self._on_event is not None:
-            self._on_event(event)
+            try:
+                self._on_event(event)
+            except Exception:  # the event is already saved, so a failing score engine must not fail the request
+                logger.exception("The score engine could not be notified about event %s", event.get_event_hash())
         return event
 
     def check_order(self, product_uuid, event_type):
-        """Check that the new event fits the product's history so far.
-        Raises InvalidEventOrderError when it does not."""
-        past_events = []
-        for event in self._repository.history(product_uuid):
-            past_events.append(event.get_event_type())
+        """Check that the new event may follow the product's last event (see NEXT_EVENTS).
+        Raises InvalidEventOrderError when it may not."""
+        past_events = [event.get_event_type() for event in self._repository.history(product_uuid)]
+        last_event = past_events[-1] if past_events else None
 
-        if "recycled" in past_events:
+        if last_event == "recycled":
             raise InvalidEventOrderError("This product was recycled. No more events can be added.")
-        if event_type == "manufactured" and "manufactured" in past_events:
+        if event_type == "manufactured" and last_event is not None:
             raise InvalidEventOrderError("This product was already manufactured.")
-        if event_type != "manufactured" and "manufactured" not in past_events:
-            raise InvalidEventOrderError("The first event must be 'manufactured'.")
+        if event_type not in NEXT_EVENTS[last_event]:
+            if last_event is None:
+                raise InvalidEventOrderError("The first event must be 'manufactured'.")
+            raise InvalidEventOrderError(
+                f"After '{last_event}' the next event must be: {' or '.join(NEXT_EVENTS[last_event])}.")
+
+    def next_events(self, product_uuid):
+        """The event types that may be added next to this product."""
+        history = self._repository.history(product_uuid)
+        return NEXT_EVENTS[history[-1].get_event_type() if history else None]
 
     def history(self, product_uuid):
         """All events as dicts, oldest first."""

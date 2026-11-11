@@ -138,12 +138,12 @@ endblock %} {% block content %}
       {% endfor %}
     </table>
   </div>
-  {# The events that fit the order: 'manufactured' first and only once, nothing after 'recycled'. #}
+  {# The events that fit the order: only the ones that may follow the last event (next_events). #}
   {% set past = events | map(attribute="event_type") | list %}
   {% set ns = namespace(options=[]) %}
   {% if user %}
   {% for t, roles in permissions.items() if user.role in roles %}
-  {% if ("manufactured" not in past and t == "manufactured") or ("manufactured" in past and t != "manufactured") %}
+  {% if t in next_events %}
   {% set ns.options = ns.options + [t] %}
   {% endif %}
   {% endfor %}
@@ -151,7 +151,7 @@ endblock %} {% block content %}
   {% if user and "recycled" in past %}
   <p>This product was recycled. No more events can be added.</p>
   {% elif user and not ns.options %}
-  <p>This product must be manufactured first. A manufacturer or an admin can record that.</p>
+  <p>The next event for this product must be {{ next_events | join(" or ") }}. Your role may not record it.</p>
   {% elif user %}
   <form
     method="post"

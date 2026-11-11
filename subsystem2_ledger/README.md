@@ -26,7 +26,7 @@ The Event Ledger records product lifecycle events and verifies their integrity u
 
 ### Tests
 
-`tests/test_subsystem2.py` has 5 tests: the error classes, an unknown product, a wrong role, a wrong event order, and a changed event that breaks the hash chain.
+`tests/test_subsystem2.py` has 13 tests
 
 Run from the **project root folder**
 
@@ -47,6 +47,3 @@ source venv/bin/activate
 pip install -r requirements.txt
 python -m pytest tests/test_subsystem2.py -v
 ```
-
-
-`tests/test_subsystem2.py` has 5 tests: the error classes, an unknown product, a wrong role, a wrong event order, and a changed event that breaks the hash chain.
