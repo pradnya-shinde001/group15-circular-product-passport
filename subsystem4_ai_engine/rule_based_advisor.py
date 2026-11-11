@@ -7,11 +7,19 @@ class RuleBasedAdvisor:
         self._resale_minimum = resale_minimum
         self._repair_minimum = repair_minimum
         self._actions = []
+        self._version = ""
         self.initialize()
 
     def initialize(self):
-        """Set the actions that can be recommended."""
+        """Set the actions that can be recommended, and the version of these rules."""
         self._actions = ["Repair", "Resale", "Reuse", "Recycling"]
+        self._version = "rules-v1"
+
+    def get_version(self):
+        return self._version
+
+    def set_version(self, version):
+        self._version = version
 
     def get_resale_minimum(self):
         return self._resale_minimum

@@ -3,6 +3,51 @@
 {% block content %}
 <h1>Register a product</h1>
 <p class="muted">The Product, MaterialComponent and Passport classes check the data. The materials must add up to 100 %.</p>
+
+<h2>Fill in from a photo (optional)</h2>
+<form method="post" action="/register/photo" enctype="multipart/form-data" class="card">
+  <label for="photo">Product photo (JPG or PNG, at most 10 MB)</label>
+  <input id="photo" name="photo" type="file" accept=".jpg,.jpeg,.png" required>
+  <div class="actions"><button>Identify the product</button></div>
+  <p class="muted">The AI engine (CLIP) guesses the category and the main material. The photo is deleted right after.</p>
+</form>
+
+{% if photo_result %}
+<div class="card">
+  <h2>What the AI sees</h2>
+  <div class="grid2">
+    <div>
+      <strong>Category</strong>
+      <ol>
+        {% for guess in photo_result.categories %}
+        <li>{{ guess.label }}: {{ (guess.confidence * 100)|round|int }} %{% if guess.uncertain %} <span class="muted">(uncertain)</span>{% endif %}</li>
+        {% endfor %}
+      </ol>
+    </div>
+    <div>
+      <strong>Main material</strong>
+      <ol>
+        {% for guess in photo_result.materials %}
+        <li>{{ guess.label }}: {{ (guess.confidence * 100)|round|int }} %{% if guess.uncertain %} <span class="muted">(uncertain)</span>{% endif %}</li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+  <p class="muted">Model: {{ photo_result.model }}. Guesses that are not uncertain are filled in below. Please check them.</p>
+
+  {% if matches %}
+  <strong>Existing passports of this kind</strong>
+  <ul>
+    {% for m in matches %}
+    <li><a href="/passport/{{ m.uuid }}">{{ m.name }}</a> <span class="muted">{{ m.model }} ({{ m.category }})</span></li>
+    {% endfor %}
+  </ul>
+  <p class="muted">If your product is already here, open its passport instead of registering it again.</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<h2>Product details</h2>
 <form method="post" action="/register" class="card">
   <div class="grid2">
     <div><label for="name">Name</label><input id="name" name="name" value="{{ form.name }}" required></div>

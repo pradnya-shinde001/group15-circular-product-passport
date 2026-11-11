@@ -9,6 +9,7 @@ from pathlib import Path
 TEMP_FOLDER = tempfile.mkdtemp(prefix="passport-tests-")
 os.environ["PASSPORT_DB"] = str(Path(TEMP_FOLDER) / "test.db")
 os.environ["KICONNECT_API_KEY"] = ""  # always use the rule-based advisor, never the paid LLM
+os.environ["PRELOAD_CLIP"] = "0"      # do not load the big CLIP model; the tests use a fake one
 
 sys.path.insert(0, str(Path(__file__).parent.parent))  # so `import app` finds the project
 

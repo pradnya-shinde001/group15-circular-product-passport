@@ -21,6 +21,18 @@ class InvalidProductError(AIEngineError, ValueError):
     """The product data is missing something the advisor needs, such as its condition."""
 
 
+class InvalidPhotoError(AIEngineError, ValueError):
+    """The photo is not a JPG or PNG, or it is bigger than 10 MB."""
+
+
+class InvalidRatingError(AIEngineError, ValueError):
+    """A rating must be a whole number from 1 to 5."""
+
+
+class PredictionNotFoundError(AIEngineError, LookupError):
+    """There is no saved recommendation with this id."""
+
+
 class LLMError(AIEngineError):
     """The LLM gave no usable answer: no key, no connection, a timeout, or an answer in the wrong format.
     The Recommender catches this error and uses the rule-based advisor instead."""
