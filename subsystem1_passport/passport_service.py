@@ -77,6 +77,8 @@ class PassportService:
         problems = []
         if not name:
             problems.append("Product name is required.")
+        if not model:
+            problems.append("Model is required.")
         if len(name) > MAX_TEXT_LENGTH:
             problems.append(f"Product name can be at most {MAX_TEXT_LENGTH} characters.")
         if len(model) > MAX_TEXT_LENGTH:

@@ -5,7 +5,7 @@ from .material_component import MaterialComponent
 
 
 class Product:
-    def __init__(self, name, category, lifespan_years, model="", owner=None):
+    def __init__(self, name, category, lifespan_years, model, owner=None):
         """Constructor."""
         self._uuid = None
         self._name = None
@@ -55,7 +55,9 @@ class Product:
         self._name = name.strip()
 
     def set_model(self, model):
-        self._model = (model or "").strip()
+        if not isinstance(model, str) or not model.strip():
+            raise ValueError("Product model is required.")
+        self._model = model.strip()
 
     def set_category(self, category):
         if not isinstance(category, str) or not category.strip():
@@ -89,6 +91,8 @@ class Product:
         missing = []
         if not self._name:
             missing.append("name")
+        if not self._model:
+            missing.append("model")
         if not self._category:
             missing.append("category")
         if not self._lifespan_years:
