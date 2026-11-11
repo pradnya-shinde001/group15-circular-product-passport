@@ -241,6 +241,38 @@ def passport_page(request: Request, uuid: str, msg: str = ""):
     return show(request, "passport.html", passport_page_data(uuid, msg, []))
 
 
+def edit_page_data(product, name, model, errors):
+    """What the edit page needs: the product, the values typed so far and any error messages."""
+    return {"product": product, "name": name, "model": model, "errors": errors}
+
+
+@app.get("/passport/{uuid}/edit")
+def edit_page(request: Request, uuid: str):
+    user = get_user(request)
+    if user is None:
+        return go_to(f"/login?next=/passport/{uuid}/edit")
+    product = passports.get_product(uuid)  # "Not found" for an unknown product
+    if not passports.can_edit(product, user):
+        text = "Only the manufacturer who registered this product, or an admin, can edit it."
+        return show(request, "message.html", {"title": "Not allowed", "text": text}, 403)
+    return show(request, "edit.html", edit_page_data(product, product["name"], product["model"], []))
+
+
+@app.post("/passport/{uuid}/edit")
+def edit_product(request: Request, uuid: str, name: str = Form(""), model: str = Form("")):
+    user = get_user(request)
+    if user is None:
+        return go_to(f"/login?next=/passport/{uuid}/edit")
+    product = passports.get_product(uuid)  # "Not found" for an unknown product
+    try:
+        passports.update_details(uuid, user, name, model)
+    except PermissionError as error:
+        return show(request, "message.html", {"title": "Not allowed", "text": str(error)}, 403)
+    except ValueError as error:
+        return show(request, "edit.html", edit_page_data(product, name, model, error.args[0]), 400)
+    return go_to(f"/passport/{uuid}?msg=Details+updated")
+
+
 @app.get("/passport/{uuid}/qr.png")
 def qr_code(uuid: str):
     """The QR code image that opens this passport page."""

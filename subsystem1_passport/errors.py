@@ -1,7 +1,7 @@
 """Error handling for Subsystem 1. PassportError is the base class for every error it raises.
 
-The subclasses also inherit from ValueError or LookupError, so the existing
-`except ValueError` blocks and the "Not found" page in app.py keep working."""
+The subclasses also inherit from ValueError, LookupError or PermissionError, so the existing
+`except` blocks and the "Not found" page in app.py keep working."""
 
 
 class PassportError(Exception):
@@ -25,6 +25,15 @@ class AccountError(PassportError, ValueError):
 
 class RegistrationError(PassportError, ValueError):
     """A product registration failed. `message` is the list of every problem found."""
+
+
+class ProductEditError(PassportError, ValueError):
+    """A product edit failed. `message` is the list of every problem found."""
+
+
+class NotAllowedError(PassportError, PermissionError):
+    """The user may not change this product."""
+    status_code = 403
 
 
 class ProductNotFoundError(PassportError, LookupError):

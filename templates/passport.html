@@ -6,6 +6,9 @@ endblock %} {% block content %}
   {{ product.category }}{% if product.model %} · model {{ product.model }}{%
   endif %} · UUID {{ product.uuid }}
 </p>
+{% if user and (user.role == "admin" or user.id == product.owner_id) %}
+<p><a href="/passport/{{ product.uuid }}/edit">Edit details</a></p>
+{% endif %}
 
 <div class="grid2">
   <div class="card">

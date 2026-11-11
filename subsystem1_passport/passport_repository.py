@@ -41,6 +41,11 @@ class ProductRepository:
                   int(m["hazard"])) for m in materials])
         return product.get_uuid()
 
+    def update_details(self, uuid, name, model):
+        """Change only the name and model. The UUID, materials, owner and everything else stay as they were."""
+        with connect() as conn:
+            conn.execute("UPDATE products SET name = ?, model = ? WHERE uuid = ?", (name, model, uuid))
+
     def get(self, uuid):
         """One product with its owner's email, or None."""
         with connect() as conn:

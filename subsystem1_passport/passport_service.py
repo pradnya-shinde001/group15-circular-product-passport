@@ -2,16 +2,17 @@
 Registers users and products, and gives the passport data and QR code."""
 import os
 
+from .errors import NotAllowedError, ProductEditError, ProductNotFoundError, RegistrationError
 from .material_component import MaterialComponent
 from .passport import Passport
 from .passport_repository import ProductRepository, UserRepository
 from .product import Product
 from .qr_code import QRCode
 from .user import User
-from .errors import ProductNotFoundError, RegistrationError
 
 CONDITIONS = ["Excellent", "Good", "Fair", "Poor"]
 REGISTER_ROLES = ("admin", "manufacturer")
+MAX_TEXT_LENGTH = 100  # longest name or model allowed when editing
 
 
 class PassportService:
@@ -34,7 +35,7 @@ class PassportService:
                          materials):
         """Validate with the Product, MaterialComponent and Passport classes, then save.
         `materials` is a list of dicts: material, percent, recycled, recyclable, hazard.
-        Returns the new UUID. Raises ValueError with the list of every problem found."""
+        Returns the new UUID. Raises RegistrationError with the list of every problem found."""
         problems = []
         owner = self._users.get(owner_id)
         if owner is None or owner["role"] not in REGISTER_ROLES:
@@ -54,17 +55,41 @@ class PassportService:
         except ValueError as e:
             problems.append(str(e))
         if problems:
-              raise RegistrationError(problems)
+            raise RegistrationError(problems)
         self._products.add(product, saved, passport.get_public_url(), owner_id, spare_parts_percent, condition)
         if self._on_registered is not None:
             self._on_registered(product.get_uuid())
         return product.get_uuid()
 
+    def can_edit(self, product, user):
+        """Only the user who registered the product, or an admin, may edit it."""
+        return user is not None and (user["role"] == "admin" or product["owner_id"] == user["id"])
+
+    def update_details(self, uuid, user, name, model):
+        """Change a product's name and model, for example to fix a typo.
+        Nothing else can change, so the UUID, QR code, materials, score and history stay trustworthy.
+        Raises ProductNotFoundError, NotAllowedError, or ProductEditError with every problem found."""
+        product = self.get_product(uuid)
+        if not self.can_edit(product, user):
+            raise NotAllowedError("Only the manufacturer who registered this product, or an admin, can edit it.")
+        name = (name or "").strip()
+        model = (model or "").strip()
+        problems = []
+        if not name:
+            problems.append("Product name is required.")
+        if len(name) > MAX_TEXT_LENGTH:
+            problems.append(f"Product name can be at most {MAX_TEXT_LENGTH} characters.")
+        if len(model) > MAX_TEXT_LENGTH:
+            problems.append(f"Model can be at most {MAX_TEXT_LENGTH} characters.")
+        if problems:
+            raise ProductEditError(problems)
+        self._products.update_details(uuid, name, model)
+
     def get_product(self, uuid):
-        """The product, or LookupError when there is none."""
+        """The product, or ProductNotFoundError when there is none."""
         product = self._products.get(uuid)
         if product is None:
-                        raise ProductNotFoundError(f"No product with the UUID {uuid}.")
+            raise ProductNotFoundError(f"No product with the UUID {uuid}.")
         return product
 
     def materials(self, uuid):
