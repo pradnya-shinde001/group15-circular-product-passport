@@ -219,8 +219,8 @@ def test_every_kind_of_tampering_is_detected(monkeypatch, tmp_path):
     cases = [
         ("UPDATE lifecycle_events SET details = '{\"note\": \"forged\"}' WHERE product_uuid = ? AND event_type = 'repaired'", 3),
         ("UPDATE lifecycle_events SET actor_email = 'someone@else.com' WHERE product_uuid = ? AND event_type = 'repaired'", 3),
-        ("UPDATE lifecycle_events SET event_hash = 'f' || substr(event_hash, 2) WHERE product_uuid = ? AND event_type = 'repaired'", 3),
-        ("UPDATE lifecycle_events SET previous_hash = 'f' || substr(previous_hash, 2) WHERE product_uuid = ? AND event_type = 'repaired'", 3),
+        ("UPDATE lifecycle_events SET event_hash = 'x' || substr(event_hash, 2) WHERE product_uuid = ? AND event_type = 'repaired'", 3),
+        ("UPDATE lifecycle_events SET previous_hash = 'x' || substr(previous_hash, 2) WHERE product_uuid = ? AND event_type = 'repaired'", 3),
         ("DELETE FROM lifecycle_events WHERE product_uuid = ? AND event_type = 'sold'", 2),
     ]
     for sql, expected_position in cases:
