@@ -35,7 +35,7 @@ def main():
     print("Saved to passport_qr.png")
 
     heading("Validation")
-    bad = Product("Broken", "phone", 3)
+    bad = Product("Broken", "phone", 3, "BR-1")
     bad.add_material(MaterialComponent("glass", 50))
     try:
         Passport(bad)

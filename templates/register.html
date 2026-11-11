@@ -6,7 +6,7 @@
 <form method="post" action="/register" class="card">
   <div class="grid2">
     <div><label for="name">Name</label><input id="name" name="name" value="{{ form.name }}" required></div>
-    <div><label for="model">Model</label><input id="model" name="model" value="{{ form.model }}"></div>
+    <div><label for="model">Model</label><input id="model" name="model" value="{{ form.model }}" required></div>
     <div><label for="category">Category</label>
       <select id="category" name="category">
         {% for c in categories %}<option {% if form.category == c %}selected{% endif %}>{{ c }}</option>{% endfor %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %} {% block title %}Edit {{ product.name }}{% endblock %}
+{% block content %}
+<p><a href="/passport/{{ product.uuid }}">← Back to the passport</a></p>
+<h1>Edit product details</h1>
+<p class="muted">
+  Only the name and model can be changed. The UUID, QR code, materials, score
+  and history stay the same, so the passport stays trustworthy.
+</p>
+<form
+  method="post"
+  action="/passport/{{ product.uuid }}/edit"
+  class="card"
+  style="max-width: 520px"
+>
+  <label for="name">Name</label>
+  <input
+    id="name"
+    name="name"
+    value="{{ name }}"
+    maxlength="100"
+    required
+    autofocus
+  />
+  <label for="model">Model</label>
+  <input id="model" name="model" value="{{ model }}" maxlength="100" required />
+  <div class="actions"><button>Save changes</button></div>
+</form>
+{% endblock %}

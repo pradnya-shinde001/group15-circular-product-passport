@@ -11,7 +11,7 @@ from subsystem4_ai_engine.stream_advice import AdviceTransform
 
 
 def make_product(name):
-    product = Product(name, "laptop", lifespan_years=6)
+    product = Product(name, "laptop", lifespan_years=6, model="EB-14")
     product.add_material(MaterialComponent("aluminium", 60, recycled=True))
     product.add_material(MaterialComponent("plastic", 30))
     product.add_material(MaterialComponent("lithium battery", 10, hazard=True))

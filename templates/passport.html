@@ -6,6 +6,9 @@ endblock %} {% block content %}
   {{ product.category }}{% if product.model %} · model {{ product.model }}{%
   endif %} · UUID {{ product.uuid }}
 </p>
+{% if user and (user.role == "admin" or user.id == product.owner_id) %}
+<p><a href="/passport/{{ product.uuid }}/edit">Edit details</a></p>
+{% endif %}
 
 <div class="grid2">
   <div class="card">
@@ -138,20 +141,18 @@ endblock %} {% block content %}
       {% endfor %}
     </table>
   </div>
-  {# The events that fit the order: only the ones that may follow the last event (next_events). #}
-  {% set past = events | map(attribute="event_type") | list %}
-  {% set ns = namespace(options=[]) %}
-  {% if user %}
-  {% for t, roles in permissions.items() if user.role in roles %}
-  {% if t in next_events %}
-  {% set ns.options = ns.options + [t] %}
-  {% endif %}
-  {% endfor %}
-  {% endif %}
-  {% if user and "recycled" in past %}
+  {# The events that fit the order: only the ones that may follow the last event
+  (next_events). #} {% set past = events | map(attribute="event_type") | list %}
+  {% set ns = namespace(options=[]) %} {% if user %} {% for t, roles in
+  permissions.items() if user.role in roles %} {% if t in next_events %} {% set
+  ns.options = ns.options + [t] %} {% endif %} {% endfor %} {% endif %} {% if
+  user and "recycled" in past %}
   <p>This product was recycled. No more events can be added.</p>
   {% elif user and not ns.options %}
-  <p>The next event for this product must be {{ next_events | join(" or ") }}. Your role may not record it.</p>
+  <p>
+    The next event for this product must be {{ next_events | join(" or ") }}.
+    Your role may not record it.
+  </p>
   {% elif user %}
   <form
     method="post"
@@ -202,10 +203,16 @@ endblock %} {% block content %}
   </p>
   {% endif %} {% else %}
   <p>No recommendation yet.</p>
-  {% endif %}
+  {% endif %} {% if user %}
   <form method="post" action="/passport/{{ product.uuid }}/advice">
     <button>Get a new recommendation</button>
   </form>
+  {% else %}
+  <p>
+    <a href="/login?next=/passport/{{ product.uuid }}">Log in</a> to get a new
+    recommendation.
+  </p>
+  {% endif %}
   <p class="muted">
     Uses the LLM when a KI:connect key is set in .env, otherwise the rule-based
     advisor.
