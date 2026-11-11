@@ -165,6 +165,7 @@ def test_adding_an_event_takes_less_than_300_ms():
     ledger, user, product_uuid = make_chain(100)  # the last event is 'repaired', so 'used' may follow
     start = time.perf_counter()
     ledger.add_event(product_uuid, user, "used", "one more")
+    assert time.perf_counter() - start < 0.3
 
 
 def test_concurrent_events_never_share_a_previous_hash():

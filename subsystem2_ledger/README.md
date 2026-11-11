@@ -26,7 +26,7 @@ The Event Ledger records product lifecycle events and verifies their integrity u
 
 ### Tests
 
-`tests/test_subsystem2.py` has 13 tests
+`tests/test_subsystem2.py` has 14 tests
 
 Run from the **project root folder**
 
