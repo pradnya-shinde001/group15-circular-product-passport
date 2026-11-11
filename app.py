@@ -4,6 +4,7 @@ It has no business rules and no SQL: every page asks one of the four subsystems.
 Run from the project folder:  uvicorn app:app --reload
 Then open:  http://localhost:8000        (web pages)
             http://localhost:8000/docs   (API documentation)"""
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
@@ -65,12 +66,14 @@ def go_to(url):
     """Send the browser to another page."""
     return RedirectResponse(url, status_code=303)
 
+
 def logged_in_response(token, next):
     """Set the login cookie and go to `next`, but only to a page of this app, never another website."""
     if not next.startswith("/") or next.startswith("//"):
         next = "/"
     response = go_to(next)
-    response.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax")
+    secure = os.environ.get("PASSPORT_BASE_URL", "").startswith("https://")  # HTTPS only once deployed
+    response.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax", secure=secure)
     return response
 
 
@@ -94,8 +97,6 @@ def not_found(request: Request, error: LookupError):
 
 # ---------- 3. Login and logout ----------
 
-# ---------- 3. Login and logout ----------
-
 @app.get("/login")
 def login_page(request: Request, next: str = "/"):
     return show(request, "login.html", {"next": next, "email": ""})
@@ -107,7 +108,8 @@ def login(request: Request, email: str = Form(""), password: str = Form(""), nex
         user, token = auth.login(email, password)
     except ValueError as error:
         data = {"next": next, "email": email, "errors": [str(error)]}
-        return show(request, "login.html", data, 401)
+        # 401 for a wrong email or password, 429 after too many wrong passwords
+        return show(request, "login.html", data, getattr(error, "status_code", 401))
     return logged_in_response(token, next)
 
 
@@ -137,14 +139,7 @@ def logout(request: Request):
     return response
 
 
-
 # ---------- 4. Search page ----------
-@app.post("/logout")
-def logout(request: Request):
-    auth.logout(request.cookies.get(SESSION_COOKIE))
-    response = go_to("/")
-    response.delete_cookie(SESSION_COOKIE)
-    return response
 
 @app.get("/")
 def home(request: Request, q: str = ""):
@@ -268,15 +263,24 @@ def add_event(request: Request, uuid: str, event_type: str = Form(...), note: st
 
 
 @app.post("/passport/{uuid}/advice")
-def ask_for_advice(uuid: str):
+def ask_for_advice(request: Request, uuid: str):
+    if get_user(request) is None:  # each request may call the paid LLM, so a login is needed
+        return go_to(f"/login?next=/passport/{uuid}")
     prediction = advice.recommend(uuid)
     return go_to(f"/passport/{uuid}?msg=Recommendation:+{prediction.get_action()}#advice")
 
 
-# ---------- 7. Database page: every table, read live ----------
+# ---------- 7. Database page: every table, read live (admin only) ----------
 
 @app.get("/database")
 def database_page(request: Request, table: str = "products"):
+    user = get_user(request)
+    if user is None:
+        return go_to("/login?next=/database")
+    if user["role"] != "admin":
+        text = "Only an admin can see the database tables."
+        return show(request, "message.html", {"title": "Not allowed", "text": text}, 403)
+
     # The login sessions are private, so that table is never shown.
     tables = []
     for name in table_names():
