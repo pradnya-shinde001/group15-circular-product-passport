@@ -221,6 +221,18 @@ def test_llm_answer_without_reason_gets_the_rule_reason():
     assert "repairability is 80" in prediction.get_reason()
 
 
+# Test 15b
+def test_regression_only_the_first_line_of_the_llm_answer_is_used():
+    answer = "Reuse: The reusability score of 72 is high.\nProduct: {'name': 'ThinkPad', 'condition': 'Good'}"
+    recommender = Recommender(FakeLLM(answer))
+    product = {"condition": "Good", "repairability_score": 60, "reusability_score": 72}
+
+    prediction = recommender.recommend(product)
+
+    assert prediction.get_reason() == "The reusability score of 72 is high."
+    assert "Product:" not in prediction.get_reason()
+
+
 # Test 16  (NFR 9)
 def test_prediction_saves_the_model_name():
     llm_prediction = Recommender(FakeLLM("Reuse: It still works.")).recommend(
