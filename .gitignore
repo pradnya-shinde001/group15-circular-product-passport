@@ -15,3 +15,6 @@ database/*.db-journal
 
 # Images made by the demos, e.g. passport_qr.png from the Subsystem 1 demo
 *.png
+# Test coverage data (pytest --cov)
+.coverage
+htmlcov/

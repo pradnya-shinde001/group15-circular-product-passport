@@ -18,3 +18,5 @@ database/*.db-journal
 .pytest_cache/
 .git/
 *.png
+.coverage
+htmlcov/

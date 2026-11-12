@@ -1,0 +1,17 @@
+# Settings for test coverage (pytest-cov).
+# Run:  python -m pytest --cov
+[run]
+# Measure our own code only: not the tests, the virtual environments,
+# or the demo scripts (they are run by hand, never by the app).
+source = .
+omit =
+    tests/*
+    venv/*
+    .venv/*
+    source/*
+    */demo.py
+
+[report]
+# Show which lines were never run, and sort the files from least to most covered.
+show_missing = True
+sort = Cover

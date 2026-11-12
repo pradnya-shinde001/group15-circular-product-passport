@@ -25,7 +25,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run the tests
-        run: python -m pytest -v
+        run: python -m pytest -v --cov
 
   # Job 2: check that the Docker image still builds (the small one, without CLIP).
   docker:
