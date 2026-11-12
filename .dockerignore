@@ -1,0 +1,20 @@
+# Files that never go into the Docker image.
+
+# Secrets: the API key is passed in when the container starts, never built into the image
+.env
+
+# Local virtual environments (several GB with torch); the image installs its own packages
+venv/
+.venv/
+source/
+
+# The local database: the container keeps its own in the /data volume
+database/*.db
+database/*.db-journal
+
+# Caches, git history and generated files
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.git/
+*.png
