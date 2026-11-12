@@ -86,8 +86,6 @@ CREATE TABLE IF NOT EXISTS ai_predictions (
     created_at   TEXT NOT NULL
 );
 
--- Every photo identification, with the model that made it (Subsystem 4, NFR 9).
--- Only the result is kept: the photo itself is deleted right after (NFR 6).
 CREATE TABLE IF NOT EXISTS photo_identifications (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     category            TEXT NOT NULL,

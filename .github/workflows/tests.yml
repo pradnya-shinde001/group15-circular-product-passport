@@ -1,0 +1,38 @@
+# Continuous integration: GitHub runs this on every push and every pull request, on any branch.
+# See the results in the repository's "Actions" tab.
+
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Job 1: install the packages and run all pytest tests.
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v5
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install the packages
+        run: pip install -r requirements.txt
+
+      - name: Run the tests
+        run: python -m pytest -v
+
+  # Job 2: check that the Docker image still builds (the small one, without CLIP).
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v5
+
+      - name: Build the Docker image
+        run: docker build -t circular-passport .
