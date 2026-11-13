@@ -1,4 +1,4 @@
-"""5 pytest tests for Subsystem 3.  Run from the project folder:  python -m pytest tests/test_subsystem3_score.py -v"""
+"""15 pytest tests for Subsystem 3.  Run from the project folder:  python -m pytest tests/test_subsystem3_score.py -v"""
 import logging
 import sqlite3
 from types import SimpleNamespace
@@ -94,3 +94,87 @@ def test_05_repair_event_raises_score_and_history_keeps_both(db):
     history = service.history("P1")
     assert [h["reason"] for h in history] == ["registered", "event: repaired"]
     assert [h["total"] for h in history] == [first.total, second.total]
+
+
+# ---------------------------------------------------------------------------
+# Helpers and additional tests (06-15)
+# ---------------------------------------------------------------------------
+def _values(score):
+    return {s.name: s.value for s in score.sub_scores}
+
+
+def test_06_total_is_between_0_and_100(calculator):
+    score = calculator.calculate(PRODUCT, MATERIALS)
+    assert 0 <= score.total <= 100
+    assert all(0 <= s.value <= 100 for s in score.sub_scores)
+
+
+def test_07_fully_recycled_materials_give_full_recycled_content(calculator):
+    recycled = [{**m, "recycled": 100} for m in MATERIALS]
+    score = calculator.calculate(PRODUCT, recycled)
+    assert _values(score)["recycled_content"] == 100.0
+    assert score.total > 69.9
+
+
+def test_08_no_recycled_content_scores_zero(calculator):
+    virgin = [{**m, "recycled": 0} for m in MATERIALS]
+    score = calculator.calculate(PRODUCT, virgin)
+    assert _values(score)["recycled_content"] == 0.0
+    assert score.total < 69.9
+
+
+def test_09_removing_hazardous_material_improves_hazard_score(calculator):
+    safe = [{**m, "hazard": False} for m in MATERIALS]
+    baseline = calculator.calculate(PRODUCT, MATERIALS)
+    improved = calculator.calculate(PRODUCT, safe)
+    assert _values(improved)["hazard"] > _values(baseline)["hazard"]
+    assert improved.total > baseline.total
+
+
+def test_10_longer_expected_lifetime_improves_lifespan_score(calculator):
+    short = calculator.calculate({**PRODUCT, "expected_lifetime_years": 3}, MATERIALS)
+    long_ = calculator.calculate({**PRODUCT, "expected_lifetime_years": 9}, MATERIALS)
+    assert _values(long_)["lifespan"] > _values(short)["lifespan"]
+    assert long_.total > short.total
+
+
+def test_11_more_spare_parts_improves_repairability(calculator):
+    low = calculator.calculate({**PRODUCT, "spare_parts_percent": 20}, MATERIALS)
+    high = calculator.calculate({**PRODUCT, "spare_parts_percent": 80}, MATERIALS)
+    assert _values(high)["repairability"] > _values(low)["repairability"]
+    assert high.total > low.total
+
+
+def test_12_missing_lifespan_is_reported_and_lowers_total(calculator):
+    baseline = calculator.calculate(PRODUCT, MATERIALS)
+    score = calculator.calculate({**PRODUCT, "expected_lifetime_years": None}, MATERIALS)
+    assert score.incomplete
+    assert "Lifespan" in score.missing
+    assert score.total < baseline.total
+
+
+def test_13_calculation_is_deterministic_and_does_not_modify_input(calculator):
+    product_before = dict(PRODUCT)
+    materials_before = [dict(m) for m in MATERIALS]
+    first = calculator.calculate(PRODUCT, MATERIALS)
+    second = calculator.calculate(PRODUCT, MATERIALS)
+    assert first.total == second.total
+    assert _values(first) == _values(second)
+    assert PRODUCT == product_before
+    assert MATERIALS == materials_before
+
+
+def test_14_product_not_found_maps_to_a_client_error_status():
+    handler = ScoreErrorHandler()
+    response = handler.to_response(ProductNotFoundError("UNKNOWN"))
+    assert 400 <= response["status"] < 500
+    assert response["message"]
+
+
+def test_15_registering_a_product_stores_one_score_row(db):
+    service = ScoreService()
+    score = service.on_registered("P1")
+    rows = db.execute("SELECT total, reason FROM circularity_scores WHERE product_uuid = 'P1'").fetchall()
+    assert len(rows) == 1
+    assert rows[0][0] == score.total
+    assert rows[0][1] == "registered"
